@@ -1,7 +1,7 @@
 script_name("Donatik")
 script_author("bier aka Oleg_Cutov aka Vladanus")
 script_version("27/08/2020")
-script_version_number(1)
+script_version_number(2)
 script_url("https://vlaek.github.io/Donatik/")
 script.update = false
 
