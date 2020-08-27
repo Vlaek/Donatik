@@ -243,8 +243,7 @@ function main()
 	end
 	
 	imgui.ApplyCustomStyle()
-	imgui.ShowCursor = false
-	imgui.Process = false
+	imgui.Process = true
 		
 	ini1 = inicfg.load(DonateMoney, directIni1)
 	ini2 = inicfg.load(todayDonateMoney, directIni2)
@@ -272,9 +271,8 @@ function main()
 	sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Успешно загрузился!", main_color)
 	while true do
 		wait(0)
-		if ini1[DonateMoney].hud then
-			imgui.Process = true
-		end
+		imgui.ShowCursor = false
+		
 		percent = (tonumber(ini8[DonateMoneyZiel].money)/tonumber(ini8[DonateMoneyZiel].target))
 		
 		if isKeyJustPressed(VK_ESCAPE) and main_window_state.v then
@@ -428,19 +426,19 @@ function sampev.onServerMessage(color, text)
 		inicfg.save(ini8, directIni8)
 		
 		if ini9[settings].TargetNotify then
-			if tempSumma < ini8[DonateMoneyZiel].target / 4 and ini8[DonateMoneyZiel].money > ini8[DonateMoneyZiel].target / 4 then
+			if tempSumma < ini8[DonateMoneyZiel].target / 4 and ini8[DonateMoneyZiel].money >= ini8[DonateMoneyZiel].target / 4 then
 				sampAddChatMessage(u8:decode" [Donatik] {FF0000}На цель накоплено 25 процентов!", main_color)
 			end
 			
-			if tempSumma < ini8[DonateMoneyZiel].target / 2 and ini8[DonateMoneyZiel].money > ini8[DonateMoneyZiel].target / 2 then
+			if tempSumma < ini8[DonateMoneyZiel].target / 2 and ini8[DonateMoneyZiel].money >= ini8[DonateMoneyZiel].target / 2 then
 				sampAddChatMessage(u8:decode" [Donatik] {FF0000}На цель накоплено 50 процентов!", main_color)
 			end
 			
-			if tempSumma < ini8[DonateMoneyZiel].target / 4 * 3 and ini8[DonateMoneyZiel].money > ini8[DonateMoneyZiel].target / 4 * 3 then
+			if tempSumma < ini8[DonateMoneyZiel].target / 4 * 3 and ini8[DonateMoneyZiel].money >= ini8[DonateMoneyZiel].target / 4 * 3 then
 				sampAddChatMessage(u8:decode" [Donatik] {FF0000}На цель накоплено 75 процентов!", main_color)
 			end
 			
-			if tempSumma < ini8[DonateMoneyZiel].target and ini8[DonateMoneyZiel].money > ini8[DonateMoneyZiel].target then
+			if tempSumma < ini8[DonateMoneyZiel].target and ini8[DonateMoneyZiel].money >= ini8[DonateMoneyZiel].target then
 				sampAddChatMessage(u8:decode" [Donatik] {FF0000}Цель достигнута!!!", main_color)
 			end
 		end
@@ -609,19 +607,19 @@ function sampev.onSendCommand(cmd)
 				inicfg.save(ini8, directIni8)
 				
 				if ini9[settings].TargetNotify then
-					if tempSumma < ini8[DonateMoneyZiel].target / 4 and ini8[DonateMoneyZiel].money > ini8[DonateMoneyZiel].target / 4 then
+					if tempSumma < ini8[DonateMoneyZiel].target / 4 and ini8[DonateMoneyZiel].money >= ini8[DonateMoneyZiel].target / 4 then
 						sampAddChatMessage(u8:decode" [Donatik] {FF0000}На цель накоплено 25 процентов!", main_color)
 					end
 					
-					if tempSumma < ini8[DonateMoneyZiel].target / 2 and ini8[DonateMoneyZiel].money > ini8[DonateMoneyZiel].target / 2 then
+					if tempSumma < ini8[DonateMoneyZiel].target / 2 and ini8[DonateMoneyZiel].money >= ini8[DonateMoneyZiel].target / 2 then
 						sampAddChatMessage(u8:decode" [Donatik] {FF0000}На цель накоплено 50 процентов!", main_color)
 					end
 					
-					if tempSumma < ini8[DonateMoneyZiel].target / 4 * 3 and ini8[DonateMoneyZiel].money > ini8[DonateMoneyZiel].target / 4 * 3 then
+					if tempSumma < ini8[DonateMoneyZiel].target / 4 * 3 and ini8[DonateMoneyZiel].money >= ini8[DonateMoneyZiel].target / 4 * 3 then
 						sampAddChatMessage(u8:decode" [Donatik] {FF0000}На цель накоплено 75 процентов!", main_color)
 					end
 					
-					if tempSumma < ini8[DonateMoneyZiel].target and ini8[DonateMoneyZiel].money > ini8[DonateMoneyZiel].target then
+					if tempSumma < ini8[DonateMoneyZiel].target and ini8[DonateMoneyZiel].money >= ini8[DonateMoneyZiel].target then
 						sampAddChatMessage(u8:decode" [Donatik] {FF0000}Цель достигнута!!!", main_color)
 					end
 				end
@@ -858,7 +856,6 @@ function imgui.OnDrawFrame()
 	if ini1[DonateMoney].hud then
 		imgui.SetNextWindowPos(vec(498, 134))
 		imgui.SetNextWindowSize(vec(83, 8))
-		imgui.SetMouseCursor(-1)
 		ini1 = inicfg.load(DonateMoney, directIni1)
 		imgui.Begin("Donaterka", _,  imgui.WindowFlags.NoTitleBar + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoScrollbar + imgui.WindowFlags.NoMove)
 		imgui.BufferingBar(percent, vec(83, 8), false)
@@ -919,23 +916,23 @@ function imgui.OnDrawFrame()
 				if text_buffer_nick.v ~= nil and text_buffer_nick.v ~= "" and text_buffer_summa.v ~= nil and text_buffer_summa.v ~= "" and isNumber(text_buffer_summa.v) then
 					sampSendChat("/donater " .. text_buffer_nick.v .. " " .. text_buffer_summa.v)
 				else
-					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Ошибка", main_color)
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Ошибка. Введите в первое поле ник игрока, во второе сумму", main_color)
 				end
 			end
 			
-			imgui.PushItemWidth(toScreenX(175/2))
-			imgui.InputText(u8"", text_buffer_target)
+			imgui.PushItemWidth(toScreenX(175/3))
+			imgui.InputText("##inp3", text_buffer_name)
 			imgui.PopItemWidth()
 			imgui.SameLine()
-			if imgui.Button("Установить сумму сбора", vec(175/2, 10)) then
-				if text_buffer_target.v ~= nil and text_buffer_target.v ~= "" and isNumber(text_buffer_target.v) then
-					if tonumber(text_buffer_target.v) >= tonumber(0) then
-						cmd_target(text_buffer_target.v)
-					else
-						sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Ошибка. Установите значение начиная с 0", main_color)
-					end
+			imgui.PushItemWidth(toScreenX(175/3))
+			imgui.InputText("##inp4", text_buffer_target)
+			imgui.PopItemWidth()
+			imgui.SameLine()
+			if imgui.Button("Установить цель", vec(175/3, 10)) then
+				if text_buffer_name.v ~= nil and text_buffer_name.v ~= "" and text_buffer_target.v ~= nil and text_buffer_target.v ~= "" and isNumber(text_buffer_target.v) then
+					sampSendChat("/dziel " .. text_buffer_name.v .. " " .. text_buffer_target.v)
 				else
-					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Ошибка. Установите значение начиная с 0", main_color)
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Ошибка. Введите в первое поле название цели, во второе сумму", main_color)
 				end
 			end
 			if imgui.Button("Отображение HUDa", vec(177, 10)) then
@@ -946,7 +943,7 @@ function imgui.OnDrawFrame()
 			imgui.Dummy(vec(0, 2.5))
 			imgui.BeginChild("AA2", vec(175, 60), true)
 			imgui.Columns(1, "Title1", true)
-			imgui.Text("За все время:  ".. ini1[DonateMoney].money .. " вирт от " .. ini1[DonateMoney].count - 1 .. " игроков")
+			imgui.Text("За все время:  ".. ini1[DonateMoney].money .. " вирт от " .. ini1[DonateMoney].count .. " игроков")
 			imgui.Separator()
 			imgui.Columns(3, "Columns2", true)
 			imgui.Text("")
@@ -958,21 +955,21 @@ function imgui.OnDrawFrame()
 			imgui.Separator()
 			imgui.Text("Господин 1")
 			imgui.NextColumn()
-			imgui.Text((ini3[TopPlayers].firstName))
+			imgui.Text(u8(ini3[TopPlayers].firstName))
 			imgui.NextColumn()
 			imgui.Text("" .. ini3[TopPlayers].firstSumma)
 			imgui.NextColumn()
 			imgui.Separator()
 			imgui.Text("Господин 2")
 			imgui.NextColumn()
-			imgui.Text((ini3[TopPlayers].secondName))
+			imgui.Text(u8(ini3[TopPlayers].secondName))
 			imgui.NextColumn()
 			imgui.Text("" .. ini3[TopPlayers].secondSumma)
 			imgui.NextColumn()
 			imgui.Separator()
 			imgui.Text("Господин 3")
 			imgui.NextColumn()
-			imgui.Text((ini3[TopPlayers].thirdName))
+			imgui.Text(u8(ini3[TopPlayers].thirdName))
 			imgui.NextColumn()
 			imgui.Text("" .. ini3[TopPlayers].thirdSumma)
 			imgui.EndChild()
@@ -980,7 +977,7 @@ function imgui.OnDrawFrame()
 			imgui.Dummy(vec(0, 2.5))
 			imgui.BeginChild("AA", vec(175, 60), true)
 			imgui.Columns(1, "Title2", true)
-			imgui.Text("За сегодня:  ".. ini2[todayDonateMoney].money .. " вирт от " .. ini2[todayDonateMoney].count - 1 .. " игроков")
+			imgui.Text("За сегодня:  ".. ini2[todayDonateMoney].money .. " вирт от " .. ini2[todayDonateMoney].count .. " игроков")
 			imgui.Separator()
 			imgui.Columns(3, "Columns", true)
 			imgui.Text("")
@@ -992,21 +989,21 @@ function imgui.OnDrawFrame()
 			imgui.Separator()
 			imgui.Text("Господин 1")
 			imgui.NextColumn()
-			imgui.Text((ini4[todayTopPlayers].firstName))
+			imgui.Text(u8(ini4[todayTopPlayers].firstName))
 			imgui.NextColumn()
 			imgui.Text("" .. ini4[todayTopPlayers].firstSumma)
 			imgui.NextColumn()
 			imgui.Separator()
 			imgui.Text("Господин 2")
 			imgui.NextColumn()
-			imgui.Text((ini4[todayTopPlayers].secondName))
+			imgui.Text(u8(ini4[todayTopPlayers].secondName))
 			imgui.NextColumn()
 			imgui.Text("" .. ini4[todayTopPlayers].secondSumma)
 			imgui.NextColumn()
 			imgui.Separator()
 			imgui.Text("Господин 3")
 			imgui.NextColumn()
-			imgui.Text((ini4[todayTopPlayers].thirdName))
+			imgui.Text(u8(ini4[todayTopPlayers].thirdName))
 			imgui.NextColumn()
 			imgui.Text("" .. ini4[todayTopPlayers].thirdSumma)
 			imgui.EndChild()
@@ -1094,6 +1091,9 @@ function imgui.OnDrawFrame()
 			else
 				imgui.Text("Актуальная версия скрипта")
 			end
+			if imgui.Button("Перезагрузить скрипт", vec(174, 0)) then
+				thisScript():reload()
+			end
 			
 			imgui.Text("Страничка Владика:")
 			imgui.SameLine()
@@ -1117,8 +1117,6 @@ function imgui.OnDrawFrame()
 		end
 		imgui.EndChild()
 		imgui.End()
-	else
-		imgui.ShowCursor = false
 	end
 end
 
@@ -1127,7 +1125,7 @@ function imgui.initBuffers()
 end
 
 function isNumber(n)
-    return #n > 0 and n:match("[^%d]") == nil or n:match("-[^%d]") == nil
+    return type(tonumber(n)) == "number"
 end
 
 function imgui.ApplyCustomStyle()
