@@ -89,6 +89,7 @@ function main()
 		ini1 = inicfg.load({
 			[DonateMoney] = {
 				money = tonumber(0),
+				count = tonumber(0),
 				target = tonumber(1000000),
 				hud = false,
 				zielName = "Untitled"
@@ -101,7 +102,8 @@ function main()
 	if ini2[todayDonateMoney] == nil then
 		ini2 = inicfg.load({
 			[todayDonateMoney] = {
-				money = tonumber(0)
+				money = tonumber(0),
+				count = tonumber(0)
 			}
 		}, directIni2)
 		inicfg.save(ini2, directIni2)
@@ -112,11 +114,11 @@ function main()
 		ini3 = inicfg.load({
 			[TopPlayers] = {
 				firstSumma=tonumber(0),
-				thirdName="Пусто",
-				firstName="Пусто",
+				thirdName=u8:decode"РџСѓСЃС‚Рѕ",
+				firstName=u8:decode"РџСѓСЃС‚Рѕ",
 				secondSumma=tonumber(0),
 				thirdSumma=tonumber(0),
-				secondName="Пусто"
+				secondName=u8:decode"РџСѓСЃС‚Рѕ"
 			}
 		}, directIni3)
 		inicfg.save(ini3, directIni3)
@@ -127,11 +129,11 @@ function main()
 		ini4 = inicfg.load({
 			[todayTopPlayers] = {
 				firstSumma=tonumber(0),
-				thirdName="Пусто",
-				firstName="Пусто",
+				thirdName=u8:decode"РџСѓСЃС‚Рѕ",
+				firstName=u8:decode"РџСѓСЃС‚Рѕ",
 				secondSumma=tonumber(0),
 				thirdSumma=tonumber(0),
-				secondName="Пусто"
+				secondName=u8:decode"РџСѓСЃС‚Рѕ"
 			}
 		}, directIni4)
 		inicfg.save(ini4, directIni4)
@@ -267,7 +269,7 @@ function main()
 	soundManager.loadSound("percent") -- 
 	
 	checkUpdates()
-	sampAddChatMessage(" [Donaters] {FFFFFF}Успешно загрузился!", main_color)
+	sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}РЈСЃРїРµС€РЅРѕ Р·Р°РіСЂСѓР·РёР»СЃСЏ!", main_color)
 	while true do
 		wait(0)
 		if ini1[DonateMoney].hud then
@@ -293,7 +295,7 @@ end
 
 function cmd_hud()
 	ini1[DonateMoney].hud = not ini1[DonateMoney].hud
-	sampAddChatMessage(" [Donaters] {FFFFFF}Отображение HUDa: {40E0D0}" .. (ini1[DonateMoney].hud and '{06940f}ON' or '{d10000}OFF'), main_color)
+	sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}РћС‚РѕР±СЂР°Р¶РµРЅРёРµ HUDa: {40E0D0}" .. (ini1[DonateMoney].hud and '{06940f}ON' or '{d10000}OFF'), main_color)
 	inicfg.save(ini1, directIni1)
 end
 
@@ -302,7 +304,7 @@ function cmd_target(arg)
 	inicfg.save(ini1, directIni1)
 	ini8[DonateMoneyZiel].target = tonumber(arg)
 	inicfg.save(ini8, directIni8)
-	sampAddChatMessage(" [Donaters] {FFFFFF}Установлена новая цель: {40E0D0}" .. ini1[DonateMoney].target, main_color)
+	sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}РЈСЃС‚Р°РЅРѕРІР»РµРЅР° РЅРѕРІР°СЏ С†РµР»СЊ: {40E0D0}" .. ini1[DonateMoney].target, main_color)
 end
 
 function cmd_topdonaters()
@@ -310,104 +312,104 @@ function cmd_topdonaters()
 end
 
 function cmd_DonateMoney()
-	sampSendChat("Денег собрано за все время: " .. ini1[DonateMoney].money)
+	sampSendChat(u8:decode"Р”РµРЅРµРі СЃРѕР±СЂР°РЅРѕ Р·Р° РІСЃРµ РІСЂРµРјСЏ: " .. ini1[DonateMoney].money)
 end
 
 function cmd_DonateMoneyZiel()
-	sampSendChat(string.format("Денег на цель \"%s\" собрано: %s/%s [%s]", ini1[DonateMoney].zielName, ini8[DonateMoneyZiel].money, ini8[DonateMoneyZiel].target, string.sub(tostring(percent * 100), 1, 5)))
+	sampSendChat(string.format(u8:decode"Р”РµРЅРµРі РЅР° С†РµР»СЊ \"%s\" СЃРѕР±СЂР°РЅРѕ: %s/%s [%s]", ini1[DonateMoney].zielName, ini8[DonateMoneyZiel].money, ini8[DonateMoneyZiel].target, string.sub(tostring(percent * 100), 1, 5)))
 end
 
 function cmd_todayDonateMoney()
-	sampSendChat("Всего за день собрано: " .. ini2[todayDonateMoney].money)
+	sampSendChat(u8:decode"Р’СЃРµРіРѕ Р·Р° РґРµРЅСЊ СЃРѕР±СЂР°РЅРѕ: " .. ini2[todayDonateMoney].money)
 end
 
 function Waiting()
-	sampSendChat("Список пожертвований от уважаемых людей за сегодня: ")
+	sampSendChat(u8:decode"РЎРїРёСЃРѕРє РїРѕР¶РµСЂС‚РІРѕРІР°РЅРёР№ РѕС‚ СѓРІР°Р¶Р°РµРјС‹С… Р»СЋРґРµР№ Р·Р° СЃРµРіРѕРґРЅСЏ: ")
 	wait(1100)
-	sampSendChat("1. Господин " .. ini4[todayTopPlayers].firstName .. " с суммой " .. ini4[todayTopPlayers].firstSumma .. " вирт")
+	sampSendChat(u8:decode"1. Р“РѕСЃРїРѕРґРёРЅ " .. ini4[todayTopPlayers].firstName .. u8:decode" СЃ СЃСѓРјРјРѕР№ " .. ini4[todayTopPlayers].firstSumma .. u8:decode" РІРёСЂС‚")
 	wait(1100)
-	sampSendChat("2. Господин " .. ini4[todayTopPlayers].secondName .. " с суммой " .. ini4[todayTopPlayers].secondSumma .. " вирт")
+	sampSendChat(u8:decode"2. Р“РѕСЃРїРѕРґРёРЅ " .. ini4[todayTopPlayers].secondName .. u8:decode" СЃ СЃСѓРјРјРѕР№ " .. ini4[todayTopPlayers].secondSumma .. u8:decode" РІРёСЂС‚")
 	wait(1100)
-	sampSendChat("3. Господин " .. ini4[todayTopPlayers].thirdName .. " с суммой " .. ini4[todayTopPlayers].thirdSumma .. " вирт")
+	sampSendChat(u8:decode"3. Р“РѕСЃРїРѕРґРёРЅ " .. ini4[todayTopPlayers].thirdName .. u8:decode" СЃ СЃСѓРјРјРѕР№ " .. ini4[todayTopPlayers].thirdSumma .. u8:decode" РІРёСЂС‚")
 	wait(1100)
-	sampSendChat("Чтобы занять определенное место в списке, необходимо пожертвовать больше денег")
+	sampSendChat(u8:decode"Р§С‚РѕР±С‹ Р·Р°РЅСЏС‚СЊ РѕРїСЂРµРґРµР»РµРЅРЅРѕРµ РјРµСЃС‚Рѕ РІ СЃРїРёСЃРєРµ, РЅРµРѕР±С…РѕРґРёРјРѕ РїРѕР¶РµСЂС‚РІРѕРІР°С‚СЊ Р±РѕР»СЊС€Рµ РґРµРЅРµРі")
 end
 
 function Waiting2()
-	sampSendChat("Список пожертвований от уважаемых людей за все время: ")
+	sampSendChat(u8:decode"РЎРїРёСЃРѕРє РїРѕР¶РµСЂС‚РІРѕРІР°РЅРёР№ РѕС‚ СѓРІР°Р¶Р°РµРјС‹С… Р»СЋРґРµР№ Р·Р° РІСЃРµ РІСЂРµРјСЏ: ")
 	wait(1100)
-	sampSendChat("1. Господин " .. ini3[TopPlayers].firstName .. " с суммой " .. ini3[TopPlayers].firstSumma .. " вирт")
+	sampSendChat(u8:decode"1. Р“РѕСЃРїРѕРґРёРЅ " .. ini3[TopPlayers].firstName .. u8:decode" СЃ СЃСѓРјРјРѕР№ " .. ini3[TopPlayers].firstSumma .. u8:decode" РІРёСЂС‚")
 	wait(1100)
-	sampSendChat("2. Господин " .. ini3[TopPlayers].secondName .. " с суммой " .. ini3[TopPlayers].secondSumma .. " вирт")
+	sampSendChat(u8:decode"2. Р“РѕСЃРїРѕРґРёРЅ " .. ini3[TopPlayers].secondName .. u8:decode" СЃ СЃСѓРјРјРѕР№ " .. ini3[TopPlayers].secondSumma .. u8:decode" РІРёСЂС‚")
 	wait(1100)
-	sampSendChat("3. Господин " .. ini3[TopPlayers].thirdName .. " с суммой " .. ini3[TopPlayers].thirdSumma .. " вирт")
+	sampSendChat(u8:decode"3. Р“РѕСЃРїРѕРґРёРЅ " .. ini3[TopPlayers].thirdName .. u8:decode" СЃ СЃСѓРјРјРѕР№ " .. ini3[TopPlayers].thirdSumma .. u8:decode" РІРёСЂС‚")
 	wait(1100)
-	sampSendChat("Чтобы занять определенное место в списке, необходимо пожертвовать больше денег")
+	sampSendChat(u8:decode"Р§С‚РѕР±С‹ Р·Р°РЅСЏС‚СЊ РѕРїСЂРµРґРµР»РµРЅРЅРѕРµ РјРµСЃС‚Рѕ РІ СЃРїРёСЃРєРµ, РЅРµРѕР±С…РѕРґРёРјРѕ РїРѕР¶РµСЂС‚РІРѕРІР°С‚СЊ Р±РѕР»СЊС€Рµ РґРµРЅРµРі")
 end
 
 function sampev.onServerMessage(color, text)
-	if string.find(text, "Вы получили .+ вирт, от .+") and not string.find(text, ":") and not string.find(text, ".+ Вы получили ") and not string.find(text, " сказал") then
-		summa, nickname = string.match(text, "Вы получили (%d+) вирт, от (.+)%[")
+	if string.find(text, u8:decode"Р’С‹ РїРѕР»СѓС‡РёР»Рё .+ РІРёСЂС‚, РѕС‚ .+") and not string.find(text, ":") and not string.find(text, u8:decode".+ Р’С‹ РїРѕР»СѓС‡РёР»Рё ") and not string.find(text, u8:decode" СЃРєР°Р·Р°Р»") then
+		summa, nickname = string.match(text, u8:decode"Р’С‹ РїРѕР»СѓС‡РёР»Рё (%d+) РІРёСЂС‚, РѕС‚ (.+)%[")
 		
 		if ini9[settings].DonateNotify then
 			if tonumber(summa) == 100000 then
-				sampAddChatMessage(" [Donaters] {FFFFFF}Вы получили {FF0000}100000 {FFFFFF}вирт от {FF0000}" .. nickname, main_color) -- red
+				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Р’С‹ РїРѕР»СѓС‡РёР»Рё {FF0000}100000 {FFFFFF}РІРёСЂС‚ РѕС‚ {FF0000}" .. nickname, main_color) -- red
 				if ini9.settings.Sound then
 					soundManager.playSound("100k")
 				end
 			end
 			
 			if tonumber(summa) >= 75000 and tonumber(summa) ~= 100000 then
-				sampAddChatMessage(" [Donaters] {FFFFFF}Вы получили {FF1493}" .. summa .. " {FFFFFF}вирт от {FF1493}" .. nickname, main_color) -- yellow
+				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Р’С‹ РїРѕР»СѓС‡РёР»Рё {FF1493}" .. summa .. u8:decode" {FFFFFF}РІРёСЂС‚ РѕС‚ {FF1493}" .. nickname, main_color) -- yellow
 				if ini9.settings.Sound then
 					soundManager.playSound("75k")
 				end
 			end
 			
 			if tonumber(summa) >= 50000 and tonumber(summa) < 75000 then
-				sampAddChatMessage(" [Donaters] {FFFFFF}Вы получили {FF00FF}" .. summa .. " {FFFFFF}вирт от {FF00FF}" .. nickname, main_color) -- pink
+				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Р’С‹ РїРѕР»СѓС‡РёР»Рё {FF00FF}" .. summa .. u8:decode" {FFFFFF}РІРёСЂС‚ РѕС‚ {FF00FF}" .. nickname, main_color) -- pink
 				if ini9.settings.Sound then
 					soundManager.playSound("50k")
 				end
 			end
 			
 			if tonumber(summa) >= 25000 and tonumber(summa) < 50000 then
-				sampAddChatMessage(" [Donaters] {FFFFFF}Вы получили {800080}" .. summa .. " {FFFFFF}вирт от {800080}" .. nickname, main_color) -- purple
+				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Р’С‹ РїРѕР»СѓС‡РёР»Рё {800080}" .. summa .. u8:decode" {FFFFFF}РІРёСЂС‚ РѕС‚ {800080}" .. nickname, main_color) -- purple
 				if ini9.settings.Sound then
 					soundManager.playSound("25k")
 				end
 			end
 			
 			if tonumber(summa) >= 10000 and tonumber(summa) < 25000 then
-				sampAddChatMessage(" [Donaters] {FFFFFF}Вы получили {0000FF}" .. summa .. " {FFFFFF}вирт от {0000FF}" .. nickname, main_color) -- blue
+				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Р’С‹ РїРѕР»СѓС‡РёР»Рё {0000FF}" .. summa .. u8:decode" {FFFFFF}РІРёСЂС‚ РѕС‚ {0000FF}" .. nickname, main_color) -- blue
 				if ini9.settings.Sound then
 					soundManager.playSound("10k")
 				end
 			end
 			
 			if tonumber(summa) >= 5000 and tonumber(summa) < 10000 then
-				sampAddChatMessage(" [Donaters] {FFFFFF}Вы получили {00FFFF}" .. summa .. " {FFFFFF}вирт от {00FFFF}" .. nickname, main_color) -- aqua
+				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Р’С‹ РїРѕР»СѓС‡РёР»Рё {00FFFF}" .. summa .. u8:decode" {FFFFFF}РІРёСЂС‚ РѕС‚ {00FFFF}" .. nickname, main_color) -- aqua
 				if ini9.settings.Sound then
 					soundManager.playSound("5k")
 				end
 			end
 			
 			if tonumber(summa) >= 1000 and tonumber(summa) < 5000 then
-				sampAddChatMessage(" [Donaters] {FFFFFF}Вы получили {00FF00}" .. summa .. " {FFFFFF}вирт от {00FF00}" .. nickname, main_color) -- green
+				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Р’С‹ РїРѕР»СѓС‡РёР»Рё {00FF00}" .. summa .. u8:decode" {FFFFFF}РІРёСЂС‚ РѕС‚ {00FF00}" .. nickname, main_color) -- green
 				if ini9.settings.Sound then
 					soundManager.playSound("1k")
 				end
 			end
 			
 			if tonumber(summa) >= 100 and tonumber(summa) < 1000 then
-				sampAddChatMessage(" [Donaters] {FFFFFF}Вы получили {808000}" .. summa .. " {FFFFFF}вирт от {808000}" .. nickname, main_color) -- olive
+				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Р’С‹ РїРѕР»СѓС‡РёР»Рё {808000}" .. summa .. u8:decode" {FFFFFF}РІРёСЂС‚ РѕС‚ {808000}" .. nickname, main_color) -- olive
 				if ini9.settings.Sound then
 					soundManager.playSound("100")
 				end
 			end
 			
 			if tonumber(summa) < 100 then
-				sampAddChatMessage(" [Donaters] {FFFFFF}Вы получили {556B2F}" .. summa .. " {FFFFFF}вирт от {556B2F}" .. nickname, main_color) -- dark olive
+				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Р’С‹ РїРѕР»СѓС‡РёР»Рё {556B2F}" .. summa .. u8:decode" {FFFFFF}РІРёСЂС‚ РѕС‚ {556B2F}" .. nickname, main_color) -- dark olive
 				if ini9.settings.Sound then
 					soundManager.playSound("0")
 				end
@@ -427,19 +429,19 @@ function sampev.onServerMessage(color, text)
 		
 		if ini9[settings].TargetNotify then
 			if tempSumma < ini8[DonateMoneyZiel].target / 4 and ini8[DonateMoneyZiel].money > ini8[DonateMoneyZiel].target / 4 then
-				sampAddChatMessage(" [Donaters] {FF0000}На цель накоплено 25 процентов!", main_color)
+				sampAddChatMessage(u8:decode" [Donatik] {FF0000}РќР° С†РµР»СЊ РЅР°РєРѕРїР»РµРЅРѕ 25 РїСЂРѕС†РµРЅС‚РѕРІ!", main_color)
 			end
 			
 			if tempSumma < ini8[DonateMoneyZiel].target / 2 and ini8[DonateMoneyZiel].money > ini8[DonateMoneyZiel].target / 2 then
-				sampAddChatMessage(" [Donaters] {FF0000}На цель накоплено 50 процентов!", main_color)
+				sampAddChatMessage(u8:decode" [Donatik] {FF0000}РќР° С†РµР»СЊ РЅР°РєРѕРїР»РµРЅРѕ 50 РїСЂРѕС†РµРЅС‚РѕРІ!", main_color)
 			end
 			
 			if tempSumma < ini8[DonateMoneyZiel].target / 4 * 3 and ini8[DonateMoneyZiel].money > ini8[DonateMoneyZiel].target / 4 * 3 then
-				sampAddChatMessage(" [Donaters] {FF0000}На цель накоплено 75 процентов!", main_color)
+				sampAddChatMessage(u8:decode" [Donatik] {FF0000}РќР° С†РµР»СЊ РЅР°РєРѕРїР»РµРЅРѕ 75 РїСЂРѕС†РµРЅС‚РѕРІ!", main_color)
 			end
 			
 			if tempSumma < ini8[DonateMoneyZiel].target and ini8[DonateMoneyZiel].money > ini8[DonateMoneyZiel].target then
-				sampAddChatMessage(" [Donaters] {FF0000}Цель достигнута!!!", main_color)
+				sampAddChatMessage(u8:decode" [Donatik] {FF0000}Р¦РµР»СЊ РґРѕСЃС‚РёРіРЅСѓС‚Р°!!!", main_color)
 			end
 		end
 		
@@ -452,13 +454,15 @@ function sampev.onServerMessage(color, text)
 				}
 			}, directIni5)
 			if ini9[settings].DonatersNotify then
-				sampAddChatMessage(" [Donaters] {FFFFFF}Господин {40E0D0}" .. nickname .. "{FFFFFF} был добавлен с базу данных" , main_color)
-				sampAddChatMessage(" [Donaters] {FFFFFF}Сумма пожертвований от {40E0D0}" .. nickname .. "{FFFFFF} составляет: {40E0D0}" .. ini5[Player].money, main_color)
+				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Р“РѕСЃРїРѕРґРёРЅ {40E0D0}" .. nickname .. u8:decode"{FFFFFF} Р±С‹Р» РґРѕР±Р°РІР»РµРЅ СЃ Р±Р°Р·Сѓ РґР°РЅРЅС‹С…" , main_color)
+				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}РЎСѓРјРјР° РїРѕР¶РµСЂС‚РІРѕРІР°РЅРёР№ РѕС‚ {40E0D0}" .. nickname .. u8:decode"{FFFFFF} СЃРѕСЃС‚Р°РІР»СЏРµС‚: {40E0D0}" .. ini5[Player].money, main_color)
 			end
+			ini1[DonateMoney].count = ini1[DonateMoney].count + 1
+			inicfg.save(ini1, directIni1)
 		else
 			ini5[Player].money = ini5[Player].money + summa
 			if ini9[settings].DonatersNotify then
-				sampAddChatMessage(" [Donaters] {FFFFFF}Сумма пожертвований от {40E0D0}" .. nickname .. "{FFFFFF} составляет: {40E0D0}" .. ini5[Player].money, main_color)
+				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}РЎСѓРјРјР° РїРѕР¶РµСЂС‚РІРѕРІР°РЅРёР№ РѕС‚ {40E0D0}" .. nickname .. u8:decode"{FFFFFF} СЃРѕСЃС‚Р°РІР»СЏРµС‚: {40E0D0}" .. ini5[Player].money, main_color)
 			end
 		end
 		inicfg.save(ini5, directIni5)
@@ -485,12 +489,14 @@ function sampev.onServerMessage(color, text)
 				}
 			}, directIni6)
 			if ini9[settings].TodayDonatersNotify then
-				sampAddChatMessage(" [Donaters] {FFFFFF}Сумма пожертвований за сегодня от {40E0D0}" .. nickname .. "{FFFFFF} составляет: {40E0D0}" .. ini6[todayPlayer].money, main_color)
+				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}РЎСѓРјРјР° РїРѕР¶РµСЂС‚РІРѕРІР°РЅРёР№ Р·Р° СЃРµРіРѕРґРЅСЏ РѕС‚ {40E0D0}" .. nickname .. u8:decode"{FFFFFF} СЃРѕСЃС‚Р°РІР»СЏРµС‚: {40E0D0}" .. ini6[todayPlayer].money, main_color)
 			end
+			ini2[todayDonateMoney].count = ini2[todayDonateMoney].count + 1
+			inicfg.save(ini2, directIni2)
 		else
 			ini6[todayPlayer].money = ini6[todayPlayer].money + summa
 			if ini9[settings].TodayDonatersNotify then
-				sampAddChatMessage(" [Donaters] {FFFFFF}Сумма пожертвований за сегодня от {40E0D0}" .. nickname .. "{FFFFFF} составляет: {40E0D0}" .. ini6[todayPlayer].money, main_color)
+				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}РЎСѓРјРјР° РїРѕР¶РµСЂС‚РІРѕРІР°РЅРёР№ Р·Р° СЃРµРіРѕРґРЅСЏ РѕС‚ {40E0D0}" .. nickname .. u8:decode"{FFFFFF} СЃРѕСЃС‚Р°РІР»СЏРµС‚: {40E0D0}" .. ini6[todayPlayer].money, main_color)
 			end
 		end
 		inicfg.save(ini6, directIni6)
@@ -604,26 +610,26 @@ function sampev.onSendCommand(cmd)
 				
 				if ini9[settings].TargetNotify then
 					if tempSumma < ini8[DonateMoneyZiel].target / 4 and ini8[DonateMoneyZiel].money > ini8[DonateMoneyZiel].target / 4 then
-						sampAddChatMessage(" [Donaters] {FF0000}На цель накоплено 25 процентов!", main_color)
+						sampAddChatMessage(u8:decode" [Donatik] {FF0000}РќР° С†РµР»СЊ РЅР°РєРѕРїР»РµРЅРѕ 25 РїСЂРѕС†РµРЅС‚РѕРІ!", main_color)
 					end
 					
 					if tempSumma < ini8[DonateMoneyZiel].target / 2 and ini8[DonateMoneyZiel].money > ini8[DonateMoneyZiel].target / 2 then
-						sampAddChatMessage(" [Donaters] {FF0000}На цель накоплено 50 процентов!", main_color)
+						sampAddChatMessage(u8:decode" [Donatik] {FF0000}РќР° С†РµР»СЊ РЅР°РєРѕРїР»РµРЅРѕ 50 РїСЂРѕС†РµРЅС‚РѕРІ!", main_color)
 					end
 					
 					if tempSumma < ini8[DonateMoneyZiel].target / 4 * 3 and ini8[DonateMoneyZiel].money > ini8[DonateMoneyZiel].target / 4 * 3 then
-						sampAddChatMessage(" [Donaters] {FF0000}На цель накоплено 75 процентов!", main_color)
+						sampAddChatMessage(u8:decode" [Donatik] {FF0000}РќР° С†РµР»СЊ РЅР°РєРѕРїР»РµРЅРѕ 75 РїСЂРѕС†РµРЅС‚РѕРІ!", main_color)
 					end
 					
 					if tempSumma < ini8[DonateMoneyZiel].target and ini8[DonateMoneyZiel].money > ini8[DonateMoneyZiel].target then
-						sampAddChatMessage(" [Donaters] {FF0000}Цель достигнута!!!", main_color)
+						sampAddChatMessage(u8:decode" [Donatik] {FF0000}Р¦РµР»СЊ РґРѕСЃС‚РёРіРЅСѓС‚Р°!!!", main_color)
 					end
 				end
 			
 				Player = string.format('%s', args[2])
 				if ini5[Player] ~= nil then
 					ini5[Player].money = ini5[Player].money + args[3]
-					sampAddChatMessage(" [Donaters] {FFFFFF}Сумма пожертвований от {40E0D0}" .. args[2] .. "{FFFFFF} составляет: {40E0D0}" .. ini5[Player].money, main_color)
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}РЎСѓРјРјР° РїРѕР¶РµСЂС‚РІРѕРІР°РЅРёР№ РѕС‚ {40E0D0}" .. args[2] .. u8:decode"{FFFFFF} СЃРѕСЃС‚Р°РІР»СЏРµС‚: {40E0D0}" .. ini5[Player].money, main_color)
 				else
 					ini5 = inicfg.load({
 						[Player] = {
@@ -631,8 +637,10 @@ function sampev.onSendCommand(cmd)
 							money = tonumber(args[3])
 						}
 					}, directIni5)
-					sampAddChatMessage(" [Donaters] {FFFFFF}Господин {40E0D0}" .. args[2] .. "{FFFFFF} был добавлен с базу данных" , main_color)
-					sampAddChatMessage(" [Donaters] {FFFFFF}Сумма пожертвований от {40E0D0}" .. args[2] .. "{FFFFFF} составляет: {40E0D0}" .. args[3], main_color)
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Р“РѕСЃРїРѕРґРёРЅ {40E0D0}" .. args[2] .. u8:decode"{FFFFFF} Р±С‹Р» РґРѕР±Р°РІР»РµРЅ СЃ Р±Р°Р·Сѓ РґР°РЅРЅС‹С…" , main_color)
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}РЎСѓРјРјР° РїРѕР¶РµСЂС‚РІРѕРІР°РЅРёР№ РѕС‚ {40E0D0}" .. args[2] .. u8:decode"{FFFFFF} СЃРѕСЃС‚Р°РІР»СЏРµС‚: {40E0D0}" .. args[3], main_color)
+					ini1[DonateMoney].count = ini1[DonateMoney].count + 1
+					inicfg.save(ini1, directIni1)
 				end
 				inicfg.save(ini5, directIni5)
 				
@@ -657,10 +665,12 @@ function sampev.onSendCommand(cmd)
 							money = tonumber(args[3])
 						}
 					}, directIni6)
-					sampAddChatMessage(" [Donaters] {FFFFFF}Сумма пожертвований за сегодня от {40E0D0}" .. args[2] .. "{FFFFFF} составляет: {40E0D0}" .. ini6[todayPlayer].money, main_color)
+					ini2[todayDonateMoney].count = ini2[todayDonateMoney].count + 1
+					inicfg.save(ini2, directIni2)
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}РЎСѓРјРјР° РїРѕР¶РµСЂС‚РІРѕРІР°РЅРёР№ Р·Р° СЃРµРіРѕРґРЅСЏ РѕС‚ {40E0D0}" .. args[2] .. u8:decode"{FFFFFF} СЃРѕСЃС‚Р°РІР»СЏРµС‚: {40E0D0}" .. ini6[todayPlayer].money, main_color)
 				else
 					ini6[todayPlayer].money = ini6[todayPlayer].money + args[3]
-					sampAddChatMessage(" [Donaters] {FFFFFF}Сумма пожертвований за сегодня от {40E0D0}" .. args[2] .. "{FFFFFF} составляет: {40E0D0}" .. ini6[todayPlayer].money, main_color)
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}РЎСѓРјРјР° РїРѕР¶РµСЂС‚РІРѕРІР°РЅРёР№ Р·Р° СЃРµРіРѕРґРЅСЏ РѕС‚ {40E0D0}" .. args[2] .. u8:decode"{FFFFFF} СЃРѕСЃС‚Р°РІР»СЏРµС‚: {40E0D0}" .. ini6[todayPlayer].money, main_color)
 				end
 				inicfg.save(ini6, directIni6)
 				
@@ -837,7 +847,7 @@ function sampev.onSendCommand(cmd)
 				ini1[DonateMoney].zielName = args[2]
 				ini1[DonateMoney].target = args[3]
 				inicfg.save(ini1, directIni1)
-				sampAddChatMessage(" [Donaters] {FFFFFF}Новая цель: {40E0D0}" .. args[2] .. "{FFFFFF} с суммой {40E0D0}" .. args[3], main_color)
+				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}РќРѕРІР°СЏ С†РµР»СЊ: {40E0D0}" .. args[2] .. u8:decode"{FFFFFF} СЃ СЃСѓРјРјРѕР№ {40E0D0}" .. args[3], main_color)
 				thisScript():reload()
 			end
 		end
@@ -856,59 +866,60 @@ function imgui.OnDrawFrame()
 	end
 	if main_window_state.v then
 		imgui.SetNextWindowPos(vec(225, 125))
-		imgui.SetNextWindowSize(vec(180, 230))
+		imgui.SetNextWindowSize(vec(187, 240))
 		imgui.ShowCursor = true
 		imgui.Begin("Donatik", main_window_state, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoScrollbar)
 		
 		imgui.BeginChild('top', vec(210, 9), false)
-		imgui.BeginChild("##inp101", vec(56.5, 9), false)
-			if imgui.Selectable(u8'		     Функции', imgui.settingsTab == 1) then
+		imgui.BeginChild("##inp101", vec(59, 9), false)
+			if imgui.Selectable('		     Р¤СѓРЅРєС†РёРё', imgui.settingsTab == 1) then
 				imgui.settingsTab = 1
 			end
 			imgui.EndChild()
 			imgui.SameLine()
-			imgui.BeginChild("##inp102",vec(56.5, 9), false)
-			if imgui.Selectable(u8'		  Параметры', imgui.settingsTab == 2) then
+			imgui.BeginChild("##inp102",vec(59, 9), false)
+			if imgui.Selectable('		    РџР°СЂР°РјРµС‚СЂС‹', imgui.settingsTab == 2) then
 				imgui.settingsTab = 2
 			end
 			imgui.EndChild()
 			imgui.SameLine()
-			imgui.BeginChild("##inp103",vec(56.5, 9), false)
-			if imgui.Selectable(u8'		 Информация', imgui.settingsTab == 3) then
+			imgui.BeginChild("##inp103",vec(59, 9), false)
+			if imgui.Selectable('		 РРЅС„РѕСЂРјР°С†РёСЏ', imgui.settingsTab == 3) then
 				imgui.settingsTab = 3
 			end
 			imgui.EndChild()
 		imgui.EndChild()
-
+		
+		imgui.BeginChild('bottom', vec(181, 210), true)
 		if imgui.settingsTab == 1 then
 		
-			if imgui.Button(u8"Топ донатеры за день", vec(175/2, 10)) then
+			if imgui.Button("РўРѕРї РґРѕРЅР°С‚РµСЂС‹ Р·Р° РґРµРЅСЊ", vec(175/2, 10)) then
 				cmd_donaters()
 			end
 			imgui.SameLine()
-			if imgui.Button(u8"Топ донатеры за всё время", vec(175/2, 10)) then
+			if imgui.Button("РўРѕРї РґРѕРЅР°С‚РµСЂС‹ Р·Р° РІСЃС‘ РІСЂРµРјСЏ", vec(175/2, 10)) then
 				cmd_topdonaters()
 			end
-			if imgui.Button(u8"Денег за сегодня собрано", vec(175/2, 10)) then
+			if imgui.Button("Р”РµРЅРµРі Р·Р° СЃРµРіРѕРґРЅСЏ СЃРѕР±СЂР°РЅРѕ", vec(175/2, 10)) then
 				cmd_todayDonateMoney()
 			end
 			imgui.SameLine()
-			if imgui.Button(u8"Денег за все время собрано", vec(175/2, 10)) then
+			if imgui.Button("Р”РµРЅРµРі Р·Р° РІСЃРµ РІСЂРµРјСЏ СЃРѕР±СЂР°РЅРѕ", vec(175/2, 10)) then
 				cmd_DonateMoney()
 			end
 			imgui.PushItemWidth(toScreenX(175/3))
-			imgui.InputText(u8"##inp1", text_buffer_nick)
+			imgui.InputText("##inp1", text_buffer_nick)
 			imgui.PopItemWidth()
 			imgui.SameLine()
 			imgui.PushItemWidth(toScreenX(175/3))
-			imgui.InputText(u8"##inp2", text_buffer_summa)
+			imgui.InputText("##inp2", text_buffer_summa)
 			imgui.PopItemWidth()
 			imgui.SameLine()
-			if imgui.Button(u8"Добавить донатера", vec(175/3, 10)) then
+			if imgui.Button("Р”РѕР±Р°РІРёС‚СЊ РґРѕРЅР°С‚РµСЂР°", vec(175/3, 10)) then
 				if text_buffer_nick.v ~= nil and text_buffer_nick.v ~= "" and text_buffer_summa.v ~= nil and text_buffer_summa.v ~= "" and isNumber(text_buffer_summa.v) then
 					sampSendChat("/donater " .. text_buffer_nick.v .. " " .. text_buffer_summa.v)
 				else
-					sampAddChatMessage(" [Donaters] {FFFFFF}Ошибка", main_color)
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}РћС€РёР±РєР°", main_color)
 				end
 			end
 			
@@ -916,18 +927,18 @@ function imgui.OnDrawFrame()
 			imgui.InputText(u8"", text_buffer_target)
 			imgui.PopItemWidth()
 			imgui.SameLine()
-			if imgui.Button(u8"Установить сумму сбора", vec(175/2, 10)) then
+			if imgui.Button("РЈСЃС‚Р°РЅРѕРІРёС‚СЊ СЃСѓРјРјСѓ СЃР±РѕСЂР°", vec(175/2, 10)) then
 				if text_buffer_target.v ~= nil and text_buffer_target.v ~= "" and isNumber(text_buffer_target.v) then
 					if tonumber(text_buffer_target.v) >= tonumber(0) then
 						cmd_target(text_buffer_target.v)
 					else
-						sampAddChatMessage(" [Donaters] {FFFFFF}Ошибка. Установите значение начиная с 0", main_color)
+						sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}РћС€РёР±РєР°. РЈСЃС‚Р°РЅРѕРІРёС‚Рµ Р·РЅР°С‡РµРЅРёРµ РЅР°С‡РёРЅР°СЏ СЃ 0", main_color)
 					end
 				else
-					sampAddChatMessage(" [Donaters] {FFFFFF}Ошибка. Установите значение начиная с 0", main_color)
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}РћС€РёР±РєР°. РЈСЃС‚Р°РЅРѕРІРёС‚Рµ Р·РЅР°С‡РµРЅРёРµ РЅР°С‡РёРЅР°СЏ СЃ 0", main_color)
 				end
 			end
-			if imgui.Button(u8"Отображение HUDa", vec(175, 10)) then
+			if imgui.Button("РћС‚РѕР±СЂР°Р¶РµРЅРёРµ HUDa", vec(177, 10)) then
 				cmd_hud()
 			end
 			imgui.BufferingBar(percent, vec(180, 10), false)
@@ -935,33 +946,33 @@ function imgui.OnDrawFrame()
 			imgui.Dummy(vec(0, 2.5))
 			imgui.BeginChild("AA2", vec(175, 60), true)
 			imgui.Columns(1, "Title1", true)
-			imgui.Text(u8"За все время:  ".. ini1[DonateMoney].money)
+			imgui.Text("Р—Р° РІСЃРµ РІСЂРµРјСЏ:  ".. ini1[DonateMoney].money .. " РІРёСЂС‚ РѕС‚ " .. ini1[DonateMoney].count - 1 .. " РёРіСЂРѕРєРѕРІ")
 			imgui.Separator()
 			imgui.Columns(3, "Columns2", true)
 			imgui.Text("")
 			imgui.NextColumn()
-			imgui.Text(u8"Имя")
+			imgui.Text("РРјСЏ")
 			imgui.NextColumn()
-			imgui.Text(u8"Денег")
+			imgui.Text("Р”РµРЅРµРі")
 			imgui.NextColumn()
 			imgui.Separator()
-			imgui.Text(u8"Господин 1")
+			imgui.Text("Р“РѕСЃРїРѕРґРёРЅ 1")
 			imgui.NextColumn()
-			imgui.Text(u8(ini3[TopPlayers].firstName))
+			imgui.Text((ini3[TopPlayers].firstName))
 			imgui.NextColumn()
 			imgui.Text("" .. ini3[TopPlayers].firstSumma)
 			imgui.NextColumn()
 			imgui.Separator()
-			imgui.Text(u8"Господин 2")
+			imgui.Text("Р“РѕСЃРїРѕРґРёРЅ 2")
 			imgui.NextColumn()
-			imgui.Text(u8(ini3[TopPlayers].secondName))
+			imgui.Text((ini3[TopPlayers].secondName))
 			imgui.NextColumn()
 			imgui.Text("" .. ini3[TopPlayers].secondSumma)
 			imgui.NextColumn()
 			imgui.Separator()
-			imgui.Text(u8"Господин 3")
+			imgui.Text("Р“РѕСЃРїРѕРґРёРЅ 3")
 			imgui.NextColumn()
-			imgui.Text(u8(ini3[TopPlayers].thirdName))
+			imgui.Text((ini3[TopPlayers].thirdName))
 			imgui.NextColumn()
 			imgui.Text("" .. ini3[TopPlayers].thirdSumma)
 			imgui.EndChild()
@@ -969,33 +980,33 @@ function imgui.OnDrawFrame()
 			imgui.Dummy(vec(0, 2.5))
 			imgui.BeginChild("AA", vec(175, 60), true)
 			imgui.Columns(1, "Title2", true)
-			imgui.Text(u8"За сегодня:  ".. ini2[todayDonateMoney].money)
+			imgui.Text("Р—Р° СЃРµРіРѕРґРЅСЏ:  ".. ini2[todayDonateMoney].money .. " РІРёСЂС‚ РѕС‚ " .. ini2[todayDonateMoney].count - 1 .. " РёРіСЂРѕРєРѕРІ")
 			imgui.Separator()
 			imgui.Columns(3, "Columns", true)
 			imgui.Text("")
 			imgui.NextColumn()
-			imgui.Text(u8"Имя")
+			imgui.Text("РРјСЏ")
 			imgui.NextColumn()
-			imgui.Text(u8"Денег")
+			imgui.Text("Р”РµРЅРµРі")
 			imgui.NextColumn()
 			imgui.Separator()
-			imgui.Text(u8"Господин 1")
+			imgui.Text("Р“РѕСЃРїРѕРґРёРЅ 1")
 			imgui.NextColumn()
-			imgui.Text(u8(ini4[todayTopPlayers].firstName))
+			imgui.Text((ini4[todayTopPlayers].firstName))
 			imgui.NextColumn()
 			imgui.Text("" .. ini4[todayTopPlayers].firstSumma)
 			imgui.NextColumn()
 			imgui.Separator()
-			imgui.Text(u8"Господин 2")
+			imgui.Text("Р“РѕСЃРїРѕРґРёРЅ 2")
 			imgui.NextColumn()
-			imgui.Text(u8(ini4[todayTopPlayers].secondName))
+			imgui.Text((ini4[todayTopPlayers].secondName))
 			imgui.NextColumn()
 			imgui.Text("" .. ini4[todayTopPlayers].secondSumma)
 			imgui.NextColumn()
 			imgui.Separator()
-			imgui.Text(u8"Господин 3")
+			imgui.Text("Р“РѕСЃРїРѕРґРёРЅ 3")
 			imgui.NextColumn()
-			imgui.Text(u8(ini4[todayTopPlayers].thirdName))
+			imgui.Text((ini4[todayTopPlayers].thirdName))
 			imgui.NextColumn()
 			imgui.Text("" .. ini4[todayTopPlayers].thirdSumma)
 			imgui.EndChild()
@@ -1009,7 +1020,7 @@ function imgui.OnDrawFrame()
 				inicfg.save(ini9, directIni9)
 			end
 			imgui.SameLine()
-			imgui.Text(u8"Вывести список донатеров в чат")
+			imgui.Text("Р’С‹РІРµСЃС‚Рё СЃРїРёСЃРѕРє РґРѕРЅР°С‚РµСЂРѕРІ РІ С‡Р°С‚")
 
 			if imgui.HotKey("##2", ActiveTopDonaters, tLastKeys, 100) then
 				rkeys.changeHotKey(bindTopDonaters, ActiveTopDonaters.v)
@@ -1018,7 +1029,7 @@ function imgui.OnDrawFrame()
 				inicfg.save(ini9, directIni9)
 			end
 			imgui.SameLine()
-			imgui.Text(u8"Вывести список топ донатеров в чат")
+			imgui.Text("Р’С‹РІРµСЃС‚Рё СЃРїРёСЃРѕРє С‚РѕРї РґРѕРЅР°С‚РµСЂРѕРІ РІ С‡Р°С‚")
 			
 			if imgui.HotKey("##3", ActiveDonateMoney, tLastKeys, 100) then
 				rkeys.changeHotKey(bindDonateMoney, ActiveDonateMoney.v)
@@ -1027,7 +1038,7 @@ function imgui.OnDrawFrame()
 				inicfg.save(ini9, directIni9)
 			end
 			imgui.SameLine()
-			imgui.Text(u8"Вывести собранные деньги за все время в чат")
+			imgui.Text("Р’С‹РІРµСЃС‚Рё СЃРѕР±СЂР°РЅРЅС‹Рµ РґРµРЅСЊРіРё Р·Р° РІСЃРµ РІСЂРµРјСЏ РІ С‡Р°С‚")
 
 			if imgui.HotKey("##4", ActiveDonateMoneyZiel, tLastKeys, 100) then
 				rkeys.changeHotKey(bindDonateMoneyZiel, ActiveDonateMoneyZiel.v)
@@ -1036,7 +1047,7 @@ function imgui.OnDrawFrame()
 				inicfg.save(ini9, directIni9)
 			end
 			imgui.SameLine()
-			imgui.Text(u8"Вывести собранные деньги на цель чат")
+			imgui.Text("Р’С‹РІРµСЃС‚Рё СЃРѕР±СЂР°РЅРЅС‹Рµ РґРµРЅСЊРіРё РЅР° С†РµР»СЊ С‡Р°С‚")
 			
 			if imgui.HotKey("##5", ActiveHud, tLastKeys, 100) then
 				rkeys.changeHotKey(bindHud, ActiveHud.v)
@@ -1045,41 +1056,66 @@ function imgui.OnDrawFrame()
 				inicfg.save(ini9, directIni9)
 			end
 			imgui.SameLine()
-			imgui.Text(u8"Включить/выключить HUD")
+			imgui.Text("Р’РєР»СЋС‡РёС‚СЊ/РІС‹РєР»СЋС‡РёС‚СЊ HUD")
 			
 			imgui.Text(u8" ")
 			
-			if imgui.Checkbox(u8"Уведомления о донатах от игрока за все время ", imgui.ImBool(ini9.settings.DonatersNotify)) then
+			if imgui.Checkbox("РЈРІРµРґРѕРјР»РµРЅРёСЏ Рѕ РґРѕРЅР°С‚Р°С… РѕС‚ РёРіСЂРѕРєР° Р·Р° РІСЃРµ РІСЂРµРјСЏ ", imgui.ImBool(ini9.settings.DonatersNotify)) then
 				ini9.settings.DonatersNotify = not ini9.settings.DonatersNotify
 				inicfg.save(ini9, directIni9)
 			end
 			
-			if imgui.Checkbox(u8"Уведомления о донатах от игрока за сегодня ", imgui.ImBool(ini9.settings.TodayDonatersNotify)) then
+			if imgui.Checkbox("РЈРІРµРґРѕРјР»РµРЅРёСЏ Рѕ РґРѕРЅР°С‚Р°С… РѕС‚ РёРіСЂРѕРєР° Р·Р° СЃРµРіРѕРґРЅСЏ ", imgui.ImBool(ini9.settings.TodayDonatersNotify)) then
 				ini9.settings.DonatersNotify = not ini9.settings.DonatersNotify
 				inicfg.save(ini9, directIni9)
 			end
 			
-			if imgui.Checkbox(u8"Уведомления о донатах ", imgui.ImBool(ini9.settings.DonateNotify)) then
+			if imgui.Checkbox("РЈРІРµРґРѕРјР»РµРЅРёСЏ Рѕ РґРѕРЅР°С‚Р°С… ", imgui.ImBool(ini9.settings.DonateNotify)) then
 				ini9.settings.DonatersNotify = not ini9.settings.DonatersNotify
 				inicfg.save(ini9, directIni9)
 			end
 			
-			if imgui.Checkbox(u8"Уведомления о цели", imgui.ImBool(ini9.settings.TargetNotify)) then
+			if imgui.Checkbox("РЈРІРµРґРѕРјР»РµРЅРёСЏ Рѕ С†РµР»Рё", imgui.ImBool(ini9.settings.TargetNotify)) then
 				ini9.settings.TargetNotify = not ini9.settings.TargetNotify
 				inicfg.save(ini9, directIni9)
 			end
 			
-			if imgui.Checkbox(u8"Звук донатов ", imgui.ImBool(ini9.settings.Sound)) then
+			if imgui.Checkbox("Р—РІСѓРє РґРѕРЅР°С‚РѕРІ ", imgui.ImBool(ini9.settings.Sound)) then
 				ini9.settings.Sound = not ini9.settings.Sound
 				inicfg.save(ini9, directIni9)
 			end
 			
 		else
-		
-			imgui.Text("" .. ini4[todayTopPlayers].thirdSumma)
-		
+			if script.update then
+				if imgui.Button("РћР±РЅРѕРІРёС‚СЊ СЃРєСЂРёРїС‚", vec(174, 0)) then
+					imgui.Process = false
+					update()
+				end
+			else
+				imgui.Text("РђРєС‚СѓР°Р»СЊРЅР°СЏ РІРµСЂСЃРёСЏ СЃРєСЂРёРїС‚Р°")
+			end
+			
+			imgui.Text("РЎС‚СЂР°РЅРёС‡РєР° Р’Р»Р°РґРёРєР°:")
+			imgui.SameLine()
+			if imgui.Button("VK") then
+				os.execute("start https://vk.com/vlaeek")
+			end
+
+			imgui.SetCursorPos(vec(5, 80))
+			imgui.Text("РЎРїРёСЃРѕРє РєРѕРјР°РЅРґ:")
+			imgui.BeginChild('List', vec(174, 90), true)
+				imgui.Text("/dHud - РІРєР»СЋС‡РёС‚СЊ РіР»Р°РІРЅРѕРµ РјРµРЅСЋ СЃРєСЂРёРїС‚Р°")
+				imgui.Text("/dHudik - РІРєР»СЋС‡РёС‚СЊ Donatik HUD")
+				imgui.Text("/donater [РќРёРє РёРіСЂРѕРєР°] [РљРѕР»РёС‡РµСЃС‚РІРѕ РґРµРЅРµРі]")
+				imgui.Text("/dZiel [РќР°Р·РІР°РЅРёРµ С†РµР»Рё] [РљРѕР»РёС‡РµСЃС‚РІРѕ РґРµРЅРµРі]")
+				imgui.Text("/donaters - РІС‹РІРµСЃС‚Рё СЃРїРёСЃРѕРє РґРѕРЅР°С‚РµСЂРѕРІ Р·Р° СЃРµРіРѕРґРЅСЏ")
+				imgui.Text("/topDonaters - РІС‹РІРµСЃС‚Рё СЃРїРёСЃРѕРє С‚РѕРї РґРѕРЅР°С‚РµСЂРѕРІ Р·Р° РІСЃРµ РІСЂРµРјСЏ")
+				imgui.Text("/donateMoney - РІС‹РІРµСЃС‚Рё РЅР°РєРѕРїР»РµРЅРЅС‹Рµ РґРµРЅСЊРіРё Р·Р° РІСЃРµ РІСЂРµРјСЏ")
+				imgui.Text("/donateMoney - РІС‹РІРµСЃС‚Рё РЅР°РєРѕРїР»РµРЅРЅС‹Рµ РґРµРЅСЊРіРё РґР»СЏ С‚РµРєСѓС‰РµР№ С†РµР»Рё")
+				imgui.Text("/todayDonateMoney - РІС‹РІРµСЃС‚Рё РЅР°РєРѕРїР»РµРЅРЅС‹Рµ РґРµРЅСЊРіРё Р·Р° СЃРµРіРѕРґРЅСЏ")
+			imgui.EndChild()
 		end
-	
+		imgui.EndChild()
 		imgui.End()
 	else
 		imgui.ShowCursor = false
@@ -1188,7 +1224,7 @@ function checkUpdates()
 					file:close()
 					os.remove(fpath)
 					if info['version_num'] > thisScript()['version_num'] then
-						sampAddChatMessage(u8:decode' [Donatik] {FFFFFF}Доступна новая версия скрипта! /dhud > Информация > Обновить скрипт', main_color)
+						sampAddChatMessage(u8:decode' [Donatik] {FFFFFF}Р”РѕСЃС‚СѓРїРЅР° РЅРѕРІР°СЏ РІРµСЂСЃРёСЏ СЃРєСЂРёРїС‚Р°! /dhud > РРЅС„РѕСЂРјР°С†РёСЏ > РћР±РЅРѕРІРёС‚СЊ СЃРєСЂРёРїС‚', main_color)
 						script.update = true
 					return true
 					end
@@ -1201,7 +1237,7 @@ end
 function update()
 	downloadUrlToFile("https://raw.githubusercontent.com/Vlaek/Donatik/master/Donatik.lua", thisScript().path, function(_, status, _, _)
 		if status == 6 then
-			sampAddChatMessage(u8:decode' [Donatik] {FFFFFF}Скрипт обновлён!', main_color)
+			sampAddChatMessage(u8:decode' [Donatik] {FFFFFF}РЎРєСЂРёРїС‚ РѕР±РЅРѕРІР»С‘РЅ!', main_color)
 			thisScript():reload()
 		end
 	end)
