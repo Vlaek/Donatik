@@ -10,27 +10,11 @@ Donatik - это Lua скрипт с графическим интерфейсо
 
 ### Скриншоты
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+![ ](https://i.imgur.com/SJXbUGx.png) 
+![ ](https://i.imgur.com/MoP2eBE.png)
+![ ](https://i.imgur.com/ZlJZrdp.png)
+![ ](https://i.imgur.com/HknO27o.png) 
+![ ](https://i.imgur.com/i6AZDRz.png)
 
 ### Jekyll Themes
 
