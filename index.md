@@ -8,25 +8,6 @@ Donatik - это Lua скрипт с графическим интерфейсо
 -   звуковые оповещения при донатах (опционально);
 -   все сохраняется в moonloader -> config -> Donatik -> (Название сервера) -> (Ник).
 
-### Скриншоты
-
-![ ](https://i.imgur.com/SJXbUGx.png)
-
-![ ](https://i.imgur.com/UqN1PUU.png)
-
-![ ](https://i.imgur.com/gKf8c8Y.png)
-
-![ ](https://i.imgur.com/IdgFrXg.png)
-
-## Команды скрипта
-- Меню настроек скрипта - /dhud
-- Включить отображение HUDa - /dhudik
-- Вывести список топ-3 донатеров за день - /donaters
-- Вывести список топ-3 донатеров за все время - /topDonaters
-- Вывести количество собранных денег за день - /todayDonateMoney
-- Вывести количество собранных денег за все время - /donateMoney
-- Вывести количество собранных денег цели - /donateMoneyZiel
-
 ## Скачать скрипт и все необходимое ПО
 -   [Donatik](https://youtube.com)
 -   [CLEO 4](https://cleo.li)
@@ -41,3 +22,22 @@ Donatik - это Lua скрипт с графическим интерфейсо
 - Переместить папку "lib" в папку "moonloader" корневой папки игры;
 - Переместить папку "rsc" в папку "moonloader" корневой папки игры (по желанию);
 - Переместить файл "Donatik.lua" в папку "moonloader" корневой папки игры.
+
+## Команды скрипта
+- Меню настроек скрипта - /dhud
+- Включить отображение HUDa - /dhudik
+- Вывести список топ-3 донатеров за день - /donaters
+- Вывести список топ-3 донатеров за все время - /topDonaters
+- Вывести количество собранных денег за день - /todayDonateMoney
+- Вывести количество собранных денег за все время - /donateMoney
+- Вывести количество собранных денег цели - /donateMoneyZiel
+
+### Скриншоты
+
+![ ](https://i.imgur.com/SJXbUGx.png)
+
+![ ](https://i.imgur.com/UqN1PUU.png)
+
+![ ](https://i.imgur.com/gKf8c8Y.png)
+
+![ ](https://i.imgur.com/IdgFrXg.png)
