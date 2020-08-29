@@ -14,7 +14,7 @@ Donatik - это Lua скрипт с графическим интерфейсо
 
 ![ ](https://i.imgur.com/UqN1PUU.png)
 
-![ ](https://i.imgur.com/ZlJZrdp.png)
+![ ](https://i.imgur.com/gKf8c8Y.png)
 
 
 ### Jekyll Themes
