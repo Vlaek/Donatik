@@ -1,10 +1,8 @@
-## Welcome to GitHub Pages
+### Описание
 
-You can use the [editor on GitHub](https://github.com/Vlaek/Donatik/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+Donatik - это Lua скрипт предназаченный для сбора пожертвований с игроков проекта Samp-RP. После получения пожертвований скрипт автоматически составляет список топ-3 пожертвований за сегодня и за все время; ведет учет собранных денег за сегодня и все время, а также о цели сбора. Вся информация о собранных деньгах сохраняется на компьютере пользователя. 
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
-
-### Markdown
+### Скриншоты
 
 Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
 
