@@ -12,7 +12,7 @@ Donatik - это Lua скрипт с графическим интерфейсо
 
 ![ ](https://i.imgur.com/SJXbUGx.png)
 
-![ ](https://i.https://imgur.com/UqN1PUU.png)
+![ ](https://i.imgur.com/UqN1PUU.png)
 
 ![ ](https://i.imgur.com/ZlJZrdp.png)
 
