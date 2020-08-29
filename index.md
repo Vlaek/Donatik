@@ -10,11 +10,12 @@ Donatik - это Lua скрипт с графическим интерфейсо
 
 ### Скриншоты
 
-![ ](https://i.imgur.com/SJXbUGx.png) 
-![ ](https://i.imgur.com/MoP2eBE.png)
+![ ](https://i.imgur.com/SJXbUGx.png)
+
+![ ](https://i.https://imgur.com/UqN1PUU.png)
+
 ![ ](https://i.imgur.com/ZlJZrdp.png)
-![ ](https://i.imgur.com/HknO27o.png) 
-![ ](https://i.imgur.com/i6AZDRz.png)
+
 
 ### Jekyll Themes
 
