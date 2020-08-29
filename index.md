@@ -9,7 +9,7 @@ Donatik - это Lua скрипт с графическим интерфейсо
 -   все сохраняется в moonloader -> config -> Donatik -> (Название сервера) -> (Ник).
 
 ## Скачать скрипт и все необходимое ПО
--   [Donatik](https://youtube.com)
+-   [Donatik](https://github.com/Vlaek/Donatik/releases/tag/Donatik)
 -   [CLEO 4](https://cleo.li)
 -   [SAMPFUNCS v5.4.1](https://www.blast.hk/threads/17/)
 -   [Moonloader v026.5](https://www.blast.hk/threads/13305/)
