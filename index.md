@@ -6,7 +6,7 @@ Donatik - это Lua скрипт с графическим интерфейсо
 -   учёт собранных денег за день и за все время;
 -   установление цели сбора и вывод ее статуса в чат;
 -   звуковые оповещения при донатах (опционально);
--   все сохраняется в moonloader -> config -> Donatik -> (Название сервера) -> (Ник);
+-   все сохраняется в moonloader -> config -> Donatik -> (Название сервера) -> (Ник).
 
 ### Скриншоты
 
@@ -16,11 +16,28 @@ Donatik - это Lua скрипт с графическим интерфейсо
 
 ![ ](https://i.imgur.com/gKf8c8Y.png)
 
+![ ](https://i.imgur.com/IdgFrXg.png)
 
-### Jekyll Themes
+## Команды скрипта
+- Меню настроек скрипта - /dhud
+- Включить отображение HUDa - /dhudik
+- Вывести список топ-3 донатеров за день - /donaters
+- Вывести список топ-3 донатеров за все время - /topDonaters
+- Вывести количество собранных денег за день - /todayDonateMoney
+- Вывести количество собранных денег за все время - /donateMoney
+- Вывести количество собранных денег цели - /donateMoneyZiel
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/Vlaek/Donatik/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+## Скачать скрипт и все необходимое ПО
+-   [Donatik](https://youtube.com)
+-   [CLEO 4](https://cleo.li)
+-   [SAMPFUNCS v5.4.1](https://www.blast.hk/threads/17/)
+-   [Moonloader v026.5](https://www.blast.hk/threads/13305/)
 
-### Support or Contact
+## Установка скрипта
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+- Установить CLEO 4;
+- Установить SAMPFUNCS v5.4.1;
+- Установить Moonloader v026.5;
+- Переместить папку "lib" в папку "moonloader" корневой папки игры;
+- Переместить папку "rsc" в папку "moonloader" корневой папки игры (по желанию);
+- Переместить файл "Donatik.lua" в папку "moonloader" корневой папки игры.
