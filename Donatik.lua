@@ -416,10 +416,16 @@ function WaitingDonaterInfo(PlayerName)
 		wait(300)
 		sampSendChat(u8:decode"Сумма пожертвований от " .. ini5[Player].nick .. u8:decode" за все время составляет: " .. ini5[Player].money)
 		wait(1150)
-		sampSendChat(u8:decode"На цель \"" .. ini1[DonateMoney].zielName .. u8:decode"\" составляет: " .. ini7[Player].money)
+		if ini7[Player] ~= nil then
+			sampSendChat(u8:decode"На цель \"" .. ini1[DonateMoney].zielName .. u8:decode"\" составляет: " .. ini7[Player].money)
+		end
 		todayPlayer = string.format('%s-%s-%s-%s', my_day, my_month, my_year, PlayerName)
 		wait(1150)
-		sampSendChat(u8:decode"За сегодня составляет: " .. ini6[todayPlayer].money)
+		if ini6[todayPlayer] == nil then
+			sampSendChat(u8:decode"Сегодня пожертвований не было")
+		else
+			sampSendChat(u8:decode"За сегодня составляет: " .. ini6[todayPlayer].money)
+		end
 	end
 end
 
