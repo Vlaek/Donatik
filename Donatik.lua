@@ -1,7 +1,7 @@
 script_name("Donatik")
-script_author("bier aka Oleg_Cutov aka Vladanus")
-script_version("2.2.8")
-script_version_number(2)
+script_author("bier")
+script_version("06/09/2020")
+script_version_number(3)
 script_url("https://vlaek.github.io/Donatik/")
 script.update = false
 
@@ -39,6 +39,9 @@ local InterfacePosition = true
 
 local main_color = 0xFFFF00
 local percent = 0
+
+local textlabel = {}
+local del = false
 
 function main()
 	if not isSampLoaded() or not isSampfuncsLoaded() then return end
@@ -87,6 +90,7 @@ function main()
 	sampRegisterChatCommand("DonateMoney", cmd_DonateMoney)
 	sampRegisterChatCommand("DonateMoneyZiel", cmd_DonateMoneyZiel)
 	sampRegisterChatCommand("dHudik", cmd_hud)
+	sampRegisterChatCommand("dHelp", cmd_dHelp)
 	
 	DonateMoney = string.format('DonateMoney')
 	if ini1[DonateMoney] == nil then
@@ -185,13 +189,15 @@ function main()
 	if ini9[settings] == nil then
 		ini9 = inicfg.load({
 			[settings] = {
-				DonateNotify  =true,
-				DonatersNotify=true,
-				TodayDonatersNotify=true,
-				Sound=false,
-				TargetNotify=false,
-				x = tonumber(0),
-				y = tonumber(0)
+				DonateNotify        = true,
+				DonatersNotify      = true,
+				TodayDonatersNotify = true,
+				Sound               = false,
+				TargetNotify        = false,
+				x                   = tonumber(0),
+				y                   = tonumber(0),
+				Switch              = true,
+				textLabel           = false
 			}
 		}, directIni9)
 		inicfg.save(ini9, directIni9)
@@ -278,6 +284,10 @@ function main()
 	end	
 	
 	imgui.ApplyCustomStyle()
+	imgui.GetIO().Fonts:Clear()
+	glyph_ranges_cyrillic = imgui.GetIO().Fonts:GetGlyphRangesCyrillic()
+	imgui.GetIO().Fonts:AddFontFromFileTTF("C:\\Windows\\Fonts\\arial.ttf", 18/(1920/getScreenResolution()), nil, imgui.GetIO().Fonts:GetGlyphRangesCyrillic())
+	imgui.RebuildFonts()
 	imgui.Process = true
 		
 	ini1  = inicfg.load(DonateMoney, directIni1)
@@ -305,6 +315,9 @@ function main()
 
 	checkUpdates()
 	sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Успешно загрузился!", main_color)
+	if not ini9[settings].Switch then
+		sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Скрипт в данный момент выключен! Включить /dhud > Информация > Включить", main_color)
+	end
 	while true do
 		wait(0)
 		imgui.ShowCursor = false
@@ -315,6 +328,39 @@ function main()
 			main_window_state.v = false
 		end
 		
+		textLabelOverPlayerNickname()
+		
+	end
+end
+
+function textLabelOverPlayerNickname()
+	if ini9[settings].textLabel then
+		for i = 0, 1000 do 
+			if sampIsPlayerConnected(i) then
+				donaterNick = sampGetPlayerNickname(i)
+				if ini5[donaterNick] ~= nil then
+					if donaterNick == ini5[donaterNick].nick then
+						if textlabel[i] == nil then
+							textlabel[i] = sampCreate3dText(ConvertNumber(ini5[donaterNick].money), 0xFFFFFF00, 0.0, 0.0, 0.35, 22, false, i, -1)
+							--sampAddChatMessage(u8:decode"Создал " .. ini5[donaterNick].nick, -1)
+						end
+					end
+				end
+			else
+				if textlabel[i] ~= nil then
+					sampDestroy3dText(textlabel[i])
+					--sampAddChatMessage(u8:decode"Удалил " .. ini5[donaterNick].nick, -1)
+					textlabel[i] = nil
+				end
+			end
+		end
+	else
+		for i = 0, 1000 do
+			if textlabel[i] ~= nil then
+				sampDestroy3dText(textlabel[i])
+				textlabel[i] = nil
+			end
+		end
 	end
 end
 
@@ -429,284 +475,301 @@ function WaitingDonaterInfo(PlayerName)
 	end
 end
 
+function cmd_dHelp()
+	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/dhud {FFFFFF}- включить главное меню скрипта", main_color)
+	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/dhudik {FFFFFF}- включить Donatik HUD", main_color)
+	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/donater [Ник игрока] [Количество денег] {FFFFFF}- добавить донатера", main_color)
+	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/donater [Ник игрока] {FFFFFF}- вывести информацию о игроке (только себе)", main_color)
+	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/dziel [Название цели] [Количество денег] {FFFFFF}- установить цель сбора", main_color)
+	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/donaters {FFFFFF}- вывести список донатеров за сегодня", main_color)
+	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/topdonaters {FFFFFF}- вывести список топ донатеров за все время", main_color)
+	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/topdonatersZiel {FFFFFF}- вывести топ донатеров за все время для цели", main_color)
+	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/todaydonateMoney {FFFFFF}- вывести накопленные деньги за сегодня", main_color)
+	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/donatemoney {FFFFFF}- вывести накопленные деньги за все время", main_color)
+	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/donatemoneyziel {FFFFFF}- вывести накопленные деньги для текущей цели", main_color)
+	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/donaterinfo [Ник игрока] {FFFFFF}- вывести в общий чат информацию о игроке", main_color)
+end
+
 function sampev.onServerMessage(color, text)
-	if string.find(text, u8:decode"Вы получили .+ вирт, от .+") and not string.find(text, ":") and not string.find(text, u8:decode".+ Вы получили ") and not string.find(text, u8:decode" сказал") then
-		summa, nickname = string.match(text, u8:decode"Вы получили (%d+) вирт, от (.+)%[")
-		
-		if ini9[settings].DonateNotify then
-			if tonumber(summa) == 100000 then
-				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {FF0000}100.000 {FFFFFF}вирт от {FF0000}" .. nickname, main_color) -- red
-				if ini9.settings.Sound then
-					soundManager.playSound("100k")
+	if ini9[settings].Switch then
+		if string.find(text, u8:decode"Вы получили .+ вирт, от .+") and not string.find(text, ":") and not string.find(text, u8:decode".+ Вы получили ") and not string.find(text, u8:decode" сказал") then
+			summa, nickname = string.match(text, u8:decode"Вы получили (%d+) вирт, от (.+)%[")
+			
+			if ini9[settings].DonateNotify then
+				if tonumber(summa) == 100000 then
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {FF0000}100.000 {FFFFFF}вирт от {FF0000}" .. nickname, main_color) -- red
+					if ini9.settings.Sound then
+						soundManager.playSound("100k")
+					end
+				end
+				
+				if tonumber(summa) >= 75000 and tonumber(summa) ~= 100000 then
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {FF1493}" .. ConvertNumber(summa) .. u8:decode" {FFFFFF}вирт от {FF1493}" .. nickname, main_color) -- yellow
+					if ini9.settings.Sound then
+						soundManager.playSound("75k")
+					end
+				end
+				
+				if tonumber(summa) >= 50000 and tonumber(summa) < 75000 then
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {FF00FF}" .. ConvertNumber(summa) .. u8:decode" {FFFFFF}вирт от {FF00FF}" .. nickname, main_color) -- pink
+					if ini9.settings.Sound then
+						soundManager.playSound("50k")
+					end
+				end
+				
+				if tonumber(summa) >= 25000 and tonumber(summa) < 50000 then
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {800080}" .. ConvertNumber(summa) .. u8:decode" {FFFFFF}вирт от {800080}" .. nickname, main_color) -- purple
+					if ini9.settings.Sound then
+						soundManager.playSound("25k")
+					end
+				end
+				
+				if tonumber(summa) >= 10000 and tonumber(summa) < 25000 then
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {0000FF}" .. ConvertNumber(summa) .. u8:decode" {FFFFFF}вирт от {0000FF}" .. nickname, main_color) -- blue
+					if ini9.settings.Sound then
+						soundManager.playSound("10k")
+					end
+				end
+				
+				if tonumber(summa) >= 5000 and tonumber(summa) < 10000 then
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {00FFFF}" .. ConvertNumber(summa) .. u8:decode" {FFFFFF}вирт от {00FFFF}" .. nickname, main_color) -- aqua
+					if ini9.settings.Sound then
+						soundManager.playSound("5k")
+					end
+				end
+				
+				if tonumber(summa) >= 1000 and tonumber(summa) < 5000 then
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {00FF00}" .. ConvertNumber(summa) .. u8:decode" {FFFFFF}вирт от {00FF00}" .. nickname, main_color) -- green
+					if ini9.settings.Sound then
+						soundManager.playSound("1k")
+					end
+				end
+				
+				if tonumber(summa) >= 100 and tonumber(summa) < 1000 then
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {808000}" .. ConvertNumber(summa) .. u8:decode" {FFFFFF}вирт от {808000}" .. nickname, main_color) -- olive
+					if ini9.settings.Sound then
+						soundManager.playSound("100")
+					end
+				end
+				
+				if tonumber(summa) < 100 then
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {556B2F}" .. ConvertNumber(summa) .. u8:decode" {FFFFFF}вирт от {556B2F}" .. nickname, main_color) -- dark olive
+					if ini9.settings.Sound then
+						soundManager.playSound("0")
+					end
 				end
 			end
 			
-			if tonumber(summa) >= 75000 and tonumber(summa) ~= 100000 then
-				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {FF1493}" .. ConvertNumber(summa) .. u8:decode" {FFFFFF}вирт от {FF1493}" .. nickname, main_color) -- yellow
-				if ini9.settings.Sound then
-					soundManager.playSound("75k")
-				end
-			end
+			tempSumma = ini8[DonateMoneyZiel].money
 			
-			if tonumber(summa) >= 50000 and tonumber(summa) < 75000 then
-				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {FF00FF}" .. ConvertNumber(summa) .. u8:decode" {FFFFFF}вирт от {FF00FF}" .. nickname, main_color) -- pink
-				if ini9.settings.Sound then
-					soundManager.playSound("50k")
-				end
-			end
-			
-			if tonumber(summa) >= 25000 and tonumber(summa) < 50000 then
-				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {800080}" .. ConvertNumber(summa) .. u8:decode" {FFFFFF}вирт от {800080}" .. nickname, main_color) -- purple
-				if ini9.settings.Sound then
-					soundManager.playSound("25k")
-				end
-			end
-			
-			if tonumber(summa) >= 10000 and tonumber(summa) < 25000 then
-				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {0000FF}" .. ConvertNumber(summa) .. u8:decode" {FFFFFF}вирт от {0000FF}" .. nickname, main_color) -- blue
-				if ini9.settings.Sound then
-					soundManager.playSound("10k")
-				end
-			end
-			
-			if tonumber(summa) >= 5000 and tonumber(summa) < 10000 then
-				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {00FFFF}" .. ConvertNumber(summa) .. u8:decode" {FFFFFF}вирт от {00FFFF}" .. nickname, main_color) -- aqua
-				if ini9.settings.Sound then
-					soundManager.playSound("5k")
-				end
-			end
-			
-			if tonumber(summa) >= 1000 and tonumber(summa) < 5000 then
-				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {00FF00}" .. ConvertNumber(summa) .. u8:decode" {FFFFFF}вирт от {00FF00}" .. nickname, main_color) -- green
-				if ini9.settings.Sound then
-					soundManager.playSound("1k")
-				end
-			end
-			
-			if tonumber(summa) >= 100 and tonumber(summa) < 1000 then
-				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {808000}" .. ConvertNumber(summa) .. u8:decode" {FFFFFF}вирт от {808000}" .. nickname, main_color) -- olive
-				if ini9.settings.Sound then
-					soundManager.playSound("100")
-				end
-			end
-			
-			if tonumber(summa) < 100 then
-				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {556B2F}" .. ConvertNumber(summa) .. u8:decode" {FFFFFF}вирт от {556B2F}" .. nickname, main_color) -- dark olive
-				if ini9.settings.Sound then
-					soundManager.playSound("0")
-				end
-			end
-		end
-		
-		tempSumma = ini8[DonateMoneyZiel].money
-		
-		ini1[DonateMoney].money = ini1[DonateMoney].money + summa
-		inicfg.save(ini1, directIni1)
-		
-		ini2[todayDonateMoney].money = ini2[todayDonateMoney].money + summa
-		inicfg.save(ini2, directIni2)
-		
-		ini8[DonateMoneyZiel].money = ini8[DonateMoneyZiel].money + summa
-		inicfg.save(ini8, directIni8)
-		
-		if ini9[settings].TargetNotify then
-			if tempSumma < ini8[DonateMoneyZiel].target / 4 and ini8[DonateMoneyZiel].money >= ini8[DonateMoneyZiel].target / 4 then
-				sampAddChatMessage(u8:decode" [Donatik] {FF0000}На цель накоплено 25 процентов!", main_color)
-			end
-			
-			if tempSumma < ini8[DonateMoneyZiel].target / 2 and ini8[DonateMoneyZiel].money >= ini8[DonateMoneyZiel].target / 2 then
-				sampAddChatMessage(u8:decode" [Donatik] {FF0000}На цель накоплено 50 процентов!", main_color)
-			end
-			
-			if tempSumma < ini8[DonateMoneyZiel].target / 4 * 3 and ini8[DonateMoneyZiel].money >= ini8[DonateMoneyZiel].target / 4 * 3 then
-				sampAddChatMessage(u8:decode" [Donatik] {FF0000}На цель накоплено 75 процентов!", main_color)
-			end
-			
-			if tempSumma < ini8[DonateMoneyZiel].target and ini8[DonateMoneyZiel].money >= ini8[DonateMoneyZiel].target then
-				sampAddChatMessage(u8:decode" [Donatik] {FF0000}Цель достигнута!!!", main_color)
-			end
-		end
-		
-		Player = string.format('%s', nickname)
-		if ini5[Player] == nil then
-			ini5 = inicfg.load({
-				[Player] = {
-					nick = tostring(nickname),
-					money = tonumber(summa)
-				}
-			}, directIni5)
-			if ini9[settings].DonatersNotify then
-				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Господин {40E0D0}" .. nickname .. u8:decode"{FFFFFF} был добавлен в базу данных" , main_color)
-				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Сумма пожертвований от {40E0D0}" .. nickname .. u8:decode"{FFFFFF} составляет: {40E0D0}" .. ConvertNumber(ini5[Player].money), main_color)
-			end
-			ini1[DonateMoney].count = ini1[DonateMoney].count + 1
+			ini1[DonateMoney].money = ini1[DonateMoney].money + summa
 			inicfg.save(ini1, directIni1)
-		else
-			ini5[Player].money = ini5[Player].money + summa
-			if ini9[settings].DonatersNotify then
-				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Сумма пожертвований от {40E0D0}" .. nickname .. u8:decode"{FFFFFF} составляет: {40E0D0}" .. ConvertNumber(ini5[Player].money), main_color)
-			end
-		end
-		inicfg.save(ini5, directIni5)
 			
-		PlayerZiel = string.format('%s', nickname)
-		if ini7[PlayerZiel] == nil then
-			ini7 = inicfg.load({
-				[PlayerZiel] = {
-					nick = tostring(nickname),
-					money = tonumber(summa)
-				}
-			}, directIni7)
-		else
-			ini8[DonateMoneyZiel].count = ini8[DonateMoneyZiel].count + 1
-			ini7[PlayerZiel].money = ini7[PlayerZiel].money + summa
-		end
-		inicfg.save(ini7, directIni7)
-		
-		todayPlayer = string.format('%s-%s-%s-%s', my_day, my_month, my_year, nickname)
-		if ini6[todayPlayer] == nil then
-			ini6 = inicfg.load({
-				[todayPlayer] = {
-					nick = tostring(nickname),
-					money = tonumber(summa)
-				}
-			}, directIni6)
-			if ini9[settings].TodayDonatersNotify then
-				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Сумма пожертвований за сегодня от {40E0D0}" .. nickname .. u8:decode"{FFFFFF} составляет: {40E0D0}" .. ConvertNumber(ini6[todayPlayer].money), main_color)
-			end
-			ini2[todayDonateMoney].count = ini2[todayDonateMoney].count + 1
+			ini2[todayDonateMoney].money = ini2[todayDonateMoney].money + summa
 			inicfg.save(ini2, directIni2)
-		else
-			ini6[todayPlayer].money = ini6[todayPlayer].money + summa
-			if ini9[settings].TodayDonatersNotify then
-				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Сумма пожертвований за сегодня от {40E0D0}" .. nickname .. u8:decode"{FFFFFF} составляет: {40E0D0}" .. ConvertNumber(ini6[todayPlayer].money), main_color)
+			
+			ini8[DonateMoneyZiel].money = ini8[DonateMoneyZiel].money + summa
+			inicfg.save(ini8, directIni8)
+			
+			if ini9[settings].TargetNotify then
+				if tempSumma < ini8[DonateMoneyZiel].target / 4 and ini8[DonateMoneyZiel].money >= ini8[DonateMoneyZiel].target / 4 then
+					sampAddChatMessage(u8:decode" [Donatik] {FF0000}На цель накоплено 25 процентов!", main_color)
+				end
+				
+				if tempSumma < ini8[DonateMoneyZiel].target / 2 and ini8[DonateMoneyZiel].money >= ini8[DonateMoneyZiel].target / 2 then
+					sampAddChatMessage(u8:decode" [Donatik] {FF0000}На цель накоплено 50 процентов!", main_color)
+				end
+				
+				if tempSumma < ini8[DonateMoneyZiel].target / 4 * 3 and ini8[DonateMoneyZiel].money >= ini8[DonateMoneyZiel].target / 4 * 3 then
+					sampAddChatMessage(u8:decode" [Donatik] {FF0000}На цель накоплено 75 процентов!", main_color)
+				end
+				
+				if tempSumma < ini8[DonateMoneyZiel].target and ini8[DonateMoneyZiel].money >= ini8[DonateMoneyZiel].target then
+					sampAddChatMessage(u8:decode" [Donatik] {FF0000}Цель достигнута!!!", main_color)
+				end
 			end
-		end
-		inicfg.save(ini6, directIni6)
-		
-		-- TODAY DONATERS --
-		
-		if tonumber(ini6[todayPlayer].money) >= tonumber(ini4[todayTopPlayers].firstSumma) then
-			if ini4[todayTopPlayers].firstName ~= ini6[todayPlayer].nick then
+			
+			Player = string.format('%s', nickname)
+			if ini5[Player] == nil then
+				ini5 = inicfg.load({
+					[Player] = {
+						nick = tostring(nickname),
+						money = tonumber(summa)
+					}
+				}, directIni5)
+				if ini9[settings].DonatersNotify then
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Господин {40E0D0}" .. nickname .. u8:decode"{FFFFFF} был добавлен в базу данных" , main_color)
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Сумма пожертвований от {40E0D0}" .. nickname .. u8:decode"{FFFFFF} составляет: {40E0D0}" .. ConvertNumber(ini5[Player].money), main_color)
+				end
+				ini1[DonateMoney].count = ini1[DonateMoney].count + 1
+				inicfg.save(ini1, directIni1)
+			else
+				ini5[Player].money = ini5[Player].money + summa
+				if ini9[settings].DonatersNotify then
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Сумма пожертвований от {40E0D0}" .. nickname .. u8:decode"{FFFFFF} составляет: {40E0D0}" .. ConvertNumber(ini5[Player].money), main_color)
+				end
+			end
+			inicfg.save(ini5, directIni5)
+				
+			PlayerZiel = string.format('%s', nickname)
+			if ini7[PlayerZiel] == nil then
+				ini7 = inicfg.load({
+					[PlayerZiel] = {
+						nick = tostring(nickname),
+						money = tonumber(summa)
+					}
+				}, directIni7)
+			else
+				ini8[DonateMoneyZiel].count = ini8[DonateMoneyZiel].count + 1
+				ini7[PlayerZiel].money = ini7[PlayerZiel].money + summa
+			end
+			inicfg.save(ini7, directIni7)
+			
+			todayPlayer = string.format('%s-%s-%s-%s', my_day, my_month, my_year, nickname)
+			if ini6[todayPlayer] == nil then
+				ini6 = inicfg.load({
+					[todayPlayer] = {
+						nick = tostring(nickname),
+						money = tonumber(summa)
+					}
+				}, directIni6)
+				if ini9[settings].TodayDonatersNotify then
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Сумма пожертвований за сегодня от {40E0D0}" .. nickname .. u8:decode"{FFFFFF} составляет: {40E0D0}" .. ConvertNumber(ini6[todayPlayer].money), main_color)
+				end
+				ini2[todayDonateMoney].count = ini2[todayDonateMoney].count + 1
+				inicfg.save(ini2, directIni2)
+			else
+				ini6[todayPlayer].money = ini6[todayPlayer].money + summa
+				if ini9[settings].TodayDonatersNotify then
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Сумма пожертвований за сегодня от {40E0D0}" .. nickname .. u8:decode"{FFFFFF} составляет: {40E0D0}" .. ConvertNumber(ini6[todayPlayer].money), main_color)
+				end
+			end
+			inicfg.save(ini6, directIni6)
+			
+			-- TODAY DONATERS --
+			
+			if tonumber(ini6[todayPlayer].money) >= tonumber(ini4[todayTopPlayers].firstSumma) then
+				if ini4[todayTopPlayers].firstName ~= ini6[todayPlayer].nick then
+					if ini4[todayTopPlayers].secondName ~= ini6[todayPlayer].nick then
+						ini4[todayTopPlayers].thirdSumma = ini4[todayTopPlayers].secondSumma
+						ini4[todayTopPlayers].secondSumma = ini4[todayTopPlayers].firstSumma
+						ini4[todayTopPlayers].thirdName = ini4[todayTopPlayers].secondName
+						ini4[todayTopPlayers].secondName = ini4[todayTopPlayers].firstName
+						ini4[todayTopPlayers].firstSumma = ini6[todayPlayer].money
+						ini4[todayTopPlayers].firstName = nickname
+					else
+						ini4[todayTopPlayers].secondName = ini4[todayTopPlayers].firstName
+						ini4[todayTopPlayers].secondSumma = ini4[todayTopPlayers].firstSumma
+						ini4[todayTopPlayers].firstSumma = ini6[todayPlayer].money
+						ini4[todayTopPlayers].firstName = nickname
+					end
+				else
+					ini4[todayTopPlayers].firstSumma = ini6[todayPlayer].money
+				end
+			end
+			if tonumber(ini6[todayPlayer].money) >= tonumber(ini4[todayTopPlayers].secondSumma) and tonumber(ini6[todayPlayer].money) < tonumber(ini4[todayTopPlayers].firstSumma) then
 				if ini4[todayTopPlayers].secondName ~= ini6[todayPlayer].nick then
 					ini4[todayTopPlayers].thirdSumma = ini4[todayTopPlayers].secondSumma
-					ini4[todayTopPlayers].secondSumma = ini4[todayTopPlayers].firstSumma
 					ini4[todayTopPlayers].thirdName = ini4[todayTopPlayers].secondName
-					ini4[todayTopPlayers].secondName = ini4[todayTopPlayers].firstName
-					ini4[todayTopPlayers].firstSumma = ini6[todayPlayer].money
-					ini4[todayTopPlayers].firstName = nickname
+					ini4[todayTopPlayers].secondSumma = ini6[todayPlayer].money
+					ini4[todayTopPlayers].secondName = nickname
 				else
-					ini4[todayTopPlayers].secondName = ini4[todayTopPlayers].firstName
-					ini4[todayTopPlayers].secondSumma = ini4[todayTopPlayers].firstSumma
-					ini4[todayTopPlayers].firstSumma = ini6[todayPlayer].money
-					ini4[todayTopPlayers].firstName = nickname
+					ini4[todayTopPlayers].secondSumma = ini6[todayPlayer].money
 				end
-			else
-				ini4[todayTopPlayers].firstSumma = ini6[todayPlayer].money
 			end
-		end
-		if tonumber(ini6[todayPlayer].money) >= tonumber(ini4[todayTopPlayers].secondSumma) and tonumber(ini6[todayPlayer].money) < tonumber(ini4[todayTopPlayers].firstSumma) then
-			if ini4[todayTopPlayers].secondName ~= ini6[todayPlayer].nick then
-				ini4[todayTopPlayers].thirdSumma = ini4[todayTopPlayers].secondSumma
-				ini4[todayTopPlayers].thirdName = ini4[todayTopPlayers].secondName
-				ini4[todayTopPlayers].secondSumma = ini6[todayPlayer].money
-				ini4[todayTopPlayers].secondName = nickname
-			else
-				ini4[todayTopPlayers].secondSumma = ini6[todayPlayer].money
+			if tonumber(ini6[todayPlayer].money) >= tonumber(ini4[todayTopPlayers].thirdSumma) and tonumber(ini6[todayPlayer].money) < tonumber(ini4[todayTopPlayers].secondSumma) then
+				if ini4[todayTopPlayers].thirdName ~= ini6[todayPlayer].nick then
+					ini4[todayTopPlayers].thirdSumma = ini6[todayPlayer].money
+					ini4[todayTopPlayers].thirdName = nickname
+				else
+					ini4[todayTopPlayers].thirdSumma = ini6[todayPlayer].money
+				end
 			end
-		end
-		if tonumber(ini6[todayPlayer].money) >= tonumber(ini4[todayTopPlayers].thirdSumma) and tonumber(ini6[todayPlayer].money) < tonumber(ini4[todayTopPlayers].secondSumma) then
-			if ini4[todayTopPlayers].thirdName ~= ini6[todayPlayer].nick then
-				ini4[todayTopPlayers].thirdSumma = ini6[todayPlayer].money
-				ini4[todayTopPlayers].thirdName = nickname
-			else
-				ini4[todayTopPlayers].thirdSumma = ini6[todayPlayer].money
+			inicfg.save(ini4, directIni4)
+			
+			-- TOP DONATERS --
+			
+			if tonumber(ini5[Player].money) >= tonumber(ini3[TopPlayers].firstSumma) then
+				if ini3[TopPlayers].firstName ~= ini5[Player].nick then
+					if ini3[TopPlayers].secondName ~= ini5[Player].nick then
+						ini3[TopPlayers].thirdSumma = ini3[TopPlayers].secondSumma
+						ini3[TopPlayers].secondSumma = ini3[TopPlayers].firstSumma
+						ini3[TopPlayers].thirdName = ini3[TopPlayers].secondName
+						ini3[TopPlayers].secondName = ini3[TopPlayers].firstName
+						ini3[TopPlayers].firstSumma = ini5[Player].money
+						ini3[TopPlayers].firstName = nickname
+					else
+						ini3[TopPlayers].secondName = ini3[TopPlayers].firstName
+						ini3[TopPlayers].secondSumma = ini3[TopPlayers].firstSumma
+						ini3[TopPlayers].firstSumma = ini5[Player].money
+						ini3[TopPlayers].firstName = nickname
+					end
+				else
+					ini3[TopPlayers].firstSumma = ini5[Player].money
+				end
 			end
-		end
-		inicfg.save(ini4, directIni4)
-		
-		-- TOP DONATERS --
-		
-		if tonumber(ini5[Player].money) >= tonumber(ini3[TopPlayers].firstSumma) then
-			if ini3[TopPlayers].firstName ~= ini5[Player].nick then
+			if tonumber(ini5[Player].money) >= tonumber(ini3[TopPlayers].secondSumma) and tonumber(ini5[Player].money) < tonumber(ini3[TopPlayers].firstSumma) then
 				if ini3[TopPlayers].secondName ~= ini5[Player].nick then
 					ini3[TopPlayers].thirdSumma = ini3[TopPlayers].secondSumma
-					ini3[TopPlayers].secondSumma = ini3[TopPlayers].firstSumma
 					ini3[TopPlayers].thirdName = ini3[TopPlayers].secondName
-					ini3[TopPlayers].secondName = ini3[TopPlayers].firstName
-					ini3[TopPlayers].firstSumma = ini5[Player].money
-					ini3[TopPlayers].firstName = nickname
+					ini3[TopPlayers].secondSumma = ini5[Player].money
+					ini3[TopPlayers].secondName = nickname
 				else
-					ini3[TopPlayers].secondName = ini3[TopPlayers].firstName
-					ini3[TopPlayers].secondSumma = ini3[TopPlayers].firstSumma
-					ini3[TopPlayers].firstSumma = ini5[Player].money
-					ini3[TopPlayers].firstName = nickname
+					ini3[TopPlayers].secondSumma = ini5[Player].money
 				end
-			else
-				ini3[TopPlayers].firstSumma = ini5[Player].money
 			end
-		end
-		if tonumber(ini5[Player].money) >= tonumber(ini3[TopPlayers].secondSumma) and tonumber(ini5[Player].money) < tonumber(ini3[TopPlayers].firstSumma) then
-			if ini3[TopPlayers].secondName ~= ini5[Player].nick then
-				ini3[TopPlayers].thirdSumma = ini3[TopPlayers].secondSumma
-				ini3[TopPlayers].thirdName = ini3[TopPlayers].secondName
-				ini3[TopPlayers].secondSumma = ini5[Player].money
-				ini3[TopPlayers].secondName = nickname
-			else
-				ini3[TopPlayers].secondSumma = ini5[Player].money
+			if tonumber(ini5[Player].money) >= tonumber(ini3[TopPlayers].thirdSumma) and tonumber(ini5[Player].money) < tonumber(ini3[TopPlayers].secondSumma) then
+				if ini3[TopPlayers].thirdName ~= ini5[Player].nick then
+					ini3[TopPlayers].thirdSumma = ini5[Player].money
+					ini3[TopPlayers].thirdName = nickname
+				else
+					ini3[TopPlayers].thirdSumma = ini5[Player].money
+				end
 			end
-		end
-		if tonumber(ini5[Player].money) >= tonumber(ini3[TopPlayers].thirdSumma) and tonumber(ini5[Player].money) < tonumber(ini3[TopPlayers].secondSumma) then
-			if ini3[TopPlayers].thirdName ~= ini5[Player].nick then
-				ini3[TopPlayers].thirdSumma = ini5[Player].money
-				ini3[TopPlayers].thirdName = nickname
-			else
-				ini3[TopPlayers].thirdSumma = ini5[Player].money
+			
+			-- TOP DONATERS ZIEL --
+			
+			if tonumber(ini7[PlayerZiel].money) >= tonumber(ini10[TopPlayersZiel].firstSumma) then
+				if ini10[TopPlayersZiel] ~= ini7[PlayerZiel].nick then
+					if ini10[TopPlayersZiel].secondName ~= ini7[PlayerZiel].nick then
+						ini10[TopPlayersZiel].thirdSumma = ini10[TopPlayersZiel].secondSumma
+						ini10[TopPlayersZiel].secondSumma = ini10[TopPlayersZiel].firstSumma
+						ini10[TopPlayersZiel].thirdName = ini10[TopPlayersZiel].secondName
+						ini10[TopPlayersZiel].secondName = ini10[TopPlayersZiel].firstName
+						ini10[TopPlayersZiel].firstSumma = ini7[PlayerZiel].money
+						ini10[TopPlayersZiel].firstName = nickname
+					else
+						ini10[TopPlayersZiel].secondName = ini10[TopPlayersZiel].firstName
+						ini10[TopPlayersZiel].secondSumma = ini10[TopPlayersZiel].firstSumma
+						ini10[TopPlayersZiel].firstSumma = ini7[PlayerZiel].money
+						ini10[TopPlayersZiel].firstName = nickname
+					end
+				else
+					ini10[TopPlayersZiel].firstSumma = ini7[PlayerZiel].money
+				end
 			end
-		end
-		
-		-- TOP DONATERS ZIEL --
-		
-		if tonumber(ini7[PlayerZiel].money) >= tonumber(ini10[TopPlayersZiel].firstSumma) then
-			if ini10[TopPlayersZiel] ~= ini7[PlayerZiel].nick then
+			if tonumber(ini7[PlayerZiel].money) >= tonumber(ini10[TopPlayersZiel].secondSumma) and tonumber(ini7[PlayerZiel].money) < tonumber(ini10[TopPlayersZiel].firstSumma) then
 				if ini10[TopPlayersZiel].secondName ~= ini7[PlayerZiel].nick then
 					ini10[TopPlayersZiel].thirdSumma = ini10[TopPlayersZiel].secondSumma
-					ini10[TopPlayersZiel].secondSumma = ini10[TopPlayersZiel].firstSumma
 					ini10[TopPlayersZiel].thirdName = ini10[TopPlayersZiel].secondName
-					ini10[TopPlayersZiel].secondName = ini10[TopPlayersZiel].firstName
-					ini10[TopPlayersZiel].firstSumma = ini7[PlayerZiel].money
-					ini10[TopPlayersZiel].firstName = nickname
+					ini10[TopPlayersZiel].secondSumma = ini7[PlayerZiel].money
+					ini10[TopPlayersZiel].secondName = nickname
 				else
-					ini10[TopPlayersZiel].secondName = ini10[TopPlayersZiel].firstName
-					ini10[TopPlayersZiel].secondSumma = ini10[TopPlayersZiel].firstSumma
-					ini10[TopPlayersZiel].firstSumma = ini7[PlayerZiel].money
-					ini10[TopPlayersZiel].firstName = nickname
+					ini10[TopPlayersZiel].secondSumma = ini7[PlayerZiel].money
 				end
-			else
-				ini10[TopPlayersZiel].firstSumma = ini7[PlayerZiel].money
 			end
-		end
-		if tonumber(ini7[PlayerZiel].money) >= tonumber(ini10[TopPlayersZiel].secondSumma) and tonumber(ini7[PlayerZiel].money) < tonumber(ini10[TopPlayersZiel].firstSumma) then
-			if ini10[TopPlayersZiel].secondName ~= ini7[PlayerZiel].nick then
-				ini10[TopPlayersZiel].thirdSumma = ini10[TopPlayersZiel].secondSumma
-				ini10[TopPlayersZiel].thirdName = ini10[TopPlayersZiel].secondName
-				ini10[TopPlayersZiel].secondSumma = ini7[PlayerZiel].money
-				ini10[TopPlayersZiel].secondName = nickname
-			else
-				ini10[TopPlayersZiel].secondSumma = ini7[PlayerZiel].money
+			if tonumber(ini7[PlayerZiel].money) >= tonumber(ini10[TopPlayersZiel].thirdSumma) and tonumber(ini7[PlayerZiel].money) < tonumber(ini10[TopPlayersZiel].secondSumma) then
+				if ini10[TopPlayersZiel].thirdName ~= ini7[PlayerZiel].nick then
+					ini10[TopPlayersZiel].thirdSumma = ini7[PlayerZiel].money
+					ini10[TopPlayersZiel].thirdName = nickname
+				else
+					ini10[TopPlayersZiel].thirdSumma = ini7[PlayerZiel].money
+				end
 			end
+			
+			inicfg.save(ini10, directIni10)
+			return false
 		end
-		if tonumber(ini7[PlayerZiel].money) >= tonumber(ini10[TopPlayersZiel].thirdSumma) and tonumber(ini7[PlayerZiel].money) < tonumber(ini10[TopPlayersZiel].secondSumma) then
-			if ini10[TopPlayersZiel].thirdName ~= ini7[PlayerZiel].nick then
-				ini10[TopPlayersZiel].thirdSumma = ini7[PlayerZiel].money
-				ini10[TopPlayersZiel].thirdName = nickname
-			else
-				ini10[TopPlayersZiel].thirdSumma = ini7[PlayerZiel].money
-			end
-		end
-		
-		inicfg.save(ini10, directIni10)
-		return false
 	end
 end
 
@@ -1090,8 +1153,9 @@ function imgui.OnDrawFrame()
 		imgui.End()
 	end
 	if main_window_state.v then
+		resX, resY = getScreenResolution()
 		imgui.SetNextWindowPos(vec(137, 125))
-		imgui.SetNextWindowSize(vec(365, 240))
+		imgui.SetNextWindowSize(vec(365, 243))
 		imgui.ShowCursor = true
 		imgui.Begin("Donatik " .. thisScript().version, main_window_state, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoScrollbar)
 		imgui.BeginChild('top', vec(210, 9), false)
@@ -1102,12 +1166,12 @@ function imgui.OnDrawFrame()
 			imgui.EndChild()
 			imgui.SameLine()
 			imgui.BeginChild("##inp102",vec(59, 9), false)
-			if imgui.Selectable('		 Информация', imgui.settingsTab == 3) then
-				imgui.settingsTab = 3
+			if imgui.Selectable('		 Информация', imgui.settingsTab == 2) then
+				imgui.settingsTab = 2
 			end
 			imgui.EndChild()
 		imgui.EndChild()
-		imgui.BeginChild('bottom', vec(358.5, 210), true)
+		imgui.BeginChild('bottom', vec(358.5, 213), true)
 		if imgui.settingsTab == 1 then
 			if imgui.Button("Топ донатеры за день", vec(133.5/1.5, 10)) then
 				cmd_donaters()
@@ -1419,6 +1483,11 @@ function imgui.OnDrawFrame()
 				imgui.PopTextWrapPos()
 				imgui.EndTooltip()
 			end
+			imgui.SameLine()
+			if imgui.Checkbox("Отображение доната сверху игрока ", imgui.ImBool(ini9[settings].textLabel)) then
+				ini9[settings].textLabel = not ini9[settings].textLabel
+				inicfg.save(ini9, directIni9)
+			end
 		else
 			if script.update then
 				if imgui.Button("Обновить скрипт", vec(174, 0)) then
@@ -1436,7 +1505,7 @@ function imgui.OnDrawFrame()
 				thisScript():reload()
 			end
 			imgui.SameLine()
-			imgui.BeginChild('changelog', vec(175, 190), true)
+			imgui.BeginChild('History', vec(175, 190), true)
 				for y = 2020, 2038 do
 					for m = 0, 12 do
 						for d = 0, 31 do
@@ -1445,7 +1514,7 @@ function imgui.OnDrawFrame()
 							todayTopPlayersSelectedDay = string.format('TopPlayers-%s-%s-%s', d, m, y)
 							todayDonateMoneySelectedDay = string.format('DonateMoney-%s-%s-%s', d, m, y)
 							if ini4[todayTopPlayersSelectedDay] ~= nil and ini4[todayTopPlayersSelectedDay].firstSumma ~= 0 then
-								if imgui.CollapsingHeader(string.format(u8:decode'%s.%s.%s', d, m, y)) then
+								if imgui.CollapsingHeader(string.format(u8:decode'%s.%s.%s - %s', d, m, y, ConvertNumber(ini2[todayDonateMoneySelectedDay].money))) then
 									imgui.PushTextWrapPos(toScreenX(185))
 									imgui.BeginChild(string.format(u8:decode'%s-%s-%s', d, m, y), vec(163, 60), true)
 									imgui.Columns(1, "Title2", true)
@@ -1489,22 +1558,40 @@ function imgui.OnDrawFrame()
 					end
 				end
 			imgui.EndChild()
-			imgui.SetCursorPos(imgui.ImVec2(4, 60))
-			imgui.Text("Для связи использовать:")
+			imgui.SetCursorPos(imgui.ImVec2(7.5, 58.5))
+			if ini9[settings].Switch then
+				if imgui.Button("Прекратить работу скрипта", vec(174, 0)) then
+					ini9[settings].Switch = not ini9[settings].Switch
+				end
+			else
+				if imgui.Button("Включить скрипт", vec(174, 0)) then
+					ini9[settings].Switch = not ini9[settings].Switch
+				end
+			end
+			if imgui.IsItemHovered() then
+				imgui.BeginTooltip()
+				imgui.PushTextWrapPos(toScreenX(100))
+				imgui.TextUnformatted("Если выключить, то запись донатов прекратится")
+				imgui.PopTextWrapPos()
+				imgui.EndTooltip()
+			end
+			imgui.Text(" Для связи использовать:")
 			imgui.SameLine()
-			if imgui.Button("VK") then
+			if imgui.Button("VK", vec(20, 0)) then
 				os.execute("start https://vk.com/vlaeek")
 			end
 			imgui.SameLine()
-			if imgui.Button("GitHub") then
+			if imgui.Button("GitHub", vec(20, 0)) then
 				os.execute("start https://vlaek.github.io/Donatik/")
 			end
 			local found = false
+			imgui.SameLine()
 			for i = 0, 1000 do 
 				if sampIsPlayerConnected(i) then
 					if sampGetPlayerNickname(i) == "bier" then
-						imgui.SameLine()
-						imgui.Text("bier [" .. i .. "] сейчас в сети")
+						if imgui.Button("bier [" .. i .. "] сейчас в сети", vec(65, 0)) then
+							sampSendChat("/sms " .. i .. u8:decode" Привет, мой хороший")
+						end
 						if imgui.IsItemHovered() then
 							imgui.BeginTooltip()
 							imgui.PushTextWrapPos(toScreenX(100))
@@ -1517,8 +1604,9 @@ function imgui.OnDrawFrame()
 				end
 			end
 			if not found then
-				imgui.SameLine()
-				imgui.Text("bier сейчас не в сети")
+				if imgui.Button("bier сейчас не в сети", vec(65, 0)) then
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}bier играет на Revolution (сейчас не онлайн)", main_color)
+				end
 				if imgui.IsItemHovered() then
 					imgui.BeginTooltip()
 					imgui.PushTextWrapPos(toScreenX(100))
@@ -1527,19 +1615,54 @@ function imgui.OnDrawFrame()
 					imgui.EndTooltip()
 				end
 			end
-
-			imgui.Text("/dhud - включить главное меню скрипта")
-			imgui.Text("/dhudik - включить Donatik HUD")
-			imgui.Text("/donater [Ник игрока] [Количество денег] - добавить донатера")
-			imgui.Text("/donater [Ник игрока] - вывести информацию о игроке (только себе)")
-			imgui.Text("/dziel [Название цели] [Количество денег]")
-			imgui.Text("/donaters - вывести список донатеров за сегодня")
-			imgui.Text("/topdonaters - вывести список топ донатеров за все время")
-			imgui.Text("/topdonatersZiel - вывести список топ донатеров за все время для цели")
-			imgui.Text("/todaydonateMoney - вывести накопленные деньги за сегодня")
-			imgui.Text("/donatemoney - вывести накопленные деньги за все время")
-			imgui.Text("/donatemoneyziel - вывести накопленные деньги для текущей цели")
-			imgui.Text("/donaterinfo [Ник игрока] - вывести в общий чат информацию о игроке")
+			
+			local donatersCount = 0
+			for i = 0, 1000 do
+				if sampIsPlayerConnected(i) then
+					donaterNick = sampGetPlayerNickname(i)
+					if ini5[donaterNick] ~= nil then
+						if donaterNick == ini5[donaterNick].nick then
+							donatersCount = donatersCount + 1
+						end
+					end
+				end
+			end
+			imgui.Text(" ")
+			imgui.Text(" Донатеры онлайн " .. donatersCount)
+			imgui.BeginChild('DonatersOnline', vec(175, 133), true)
+				for i = 0, 1000 do
+					if sampIsPlayerConnected(i) then
+						donaterNick = sampGetPlayerNickname(i)
+						if ini5[donaterNick] ~= nil then
+							if donaterNick == ini5[donaterNick].nick then
+								if imgui.CollapsingHeader(string.format('%s [%s]', ini5[donaterNick].nick, i)) then
+									imgui.PushTextWrapPos(toScreenX(185))
+									imgui.BeginChild(string.format('%s', ini5[donaterNick].nick), vec(163, 40), true)
+									imgui.Text(" За всё время: " .. ConvertNumber(ini5[donaterNick].money))
+									imgui.Separator()
+									if ini7[donaterNick] ~= nil then
+										imgui.Text(" На цель: " .. ConvertNumber(ini7[donaterNick].money))
+									else
+										imgui.Text(" На цель: нет")
+									end
+									imgui.Separator()
+									todayDonaterNick = string.format('%s-%s-%s-%s', my_day, my_month, my_year, donaterNick)
+									if ini6[todayDonaterNick] ~= nil then
+										imgui.Text(" За сегодня: " .. ConvertNumber(ini6[todayDonaterNick].money))
+									else
+										imgui.Text(" За сегодня: нет")
+									end
+									imgui.EndChild()
+									if imgui.Button("Вывести информацию о донатере", vec(163, 0)) then	
+										WaitDonaterInfo:run(donaterNick)
+									end
+									imgui.PopTextWrapPos()
+								end
+							end
+						end
+					end
+				end	
+			imgui.EndChild()
 		end
 		imgui.EndChild()
 		imgui.End()
