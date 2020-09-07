@@ -40,9 +40,6 @@ local InterfacePosition = true
 local main_color = 0xFFFF00
 local percent = 0
 
-local textlabel = {}
-local del = false
-
 function main()
 	if not isSampLoaded() or not isSampfuncsLoaded() then return end
 	while not isSampAvailable() do wait(100) end
@@ -197,7 +194,9 @@ function main()
 				x                   = tonumber(0),
 				y                   = tonumber(0),
 				Switch              = true,
-				textLabel           = false
+				textLabel           = false,
+				DonaterJoined       = false,
+				donateSize          = tonumber(10000)
 			}
 		}, directIni9)
 		inicfg.save(ini9, directIni9)
@@ -329,9 +328,12 @@ function main()
 		end
 		
 		textLabelOverPlayerNickname()
+		topDonaterJoined()
 		
 	end
 end
+
+local textlabel = {}
 
 function textLabelOverPlayerNickname()
 	if ini9[settings].textLabel then
@@ -342,20 +344,73 @@ function textLabelOverPlayerNickname()
 					if donaterNick == ini5[donaterNick].nick then
 						if textlabel[i] == nil then
 							textlabel[i] = sampCreate3dText(ConvertNumber(ini5[donaterNick].money), 0xFFFFFF00, 0.0, 0.0, 0.35, 22, false, i, -1)
-							--sampAddChatMessage(u8:decode"Создал " .. ini5[donaterNick].nick, -1)
 						end
 					end
 				end
 			else
 				if textlabel[i] ~= nil then
 					sampDestroy3dText(textlabel[i])
-					--sampAddChatMessage(u8:decode"Удалил " .. ini5[donaterNick].nick, -1)
 					textlabel[i] = nil
 				end
 			end
 		end
 	else
 		for i = 0, 1000 do
+			if textlabel[i] ~= nil then
+				sampDestroy3dText(textlabel[i])
+				textlabel[i] = nil
+			end
+		end
+	end
+end
+
+local donaterOnline = {}
+local donaterNickInGame = {}
+
+function topDonaterJoined()
+	if ini9.settings.DonaterJoined then
+		for i = 0, 1000 do 
+			if sampIsPlayerConnected(i) then
+				donaterNickInGame[i] = sampGetPlayerNickname(i)
+				if ini5[donaterNickInGame[i]] ~= nil then
+					if donaterNickInGame[i] == ini5[donaterNickInGame[i]].nick then
+						if not donaterOnline[i] then
+							if tonumber(ini5[donaterNickInGame[i]].money) >= tonumber(ini9[settings].donateSize) then
+								sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}На сервер зашёл{40E0D0} " .. ini5[donaterNickInGame[i]].nick .. " [" .. i .. "]", main_color)
+								donaterOnline[i] = true
+							end
+						end
+					end
+				end
+			else
+				if donaterOnline[i] then
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}С сервера вышел{40E0D0} " .. donaterNickInGame[i], main_color)
+					donaterOnline[i] = false
+					donaterNickInGame[i] = nil
+				end
+			end
+		end
+	end
+end
+
+function restartTextLabelOverPlayerNickname()
+	for i = 0, 1000 do
+		if textlabel[i] ~= nil then
+			sampDestroy3dText(textlabel[i])
+			textlabel[i] = nil
+		end
+	end
+	for i = 0, 1000 do 
+		if sampIsPlayerConnected(i) then
+			donaterNick = sampGetPlayerNickname(i)
+			if ini5[donaterNick] ~= nil then
+				if donaterNick == ini5[donaterNick].nick then
+					if textlabel[i] == nil then
+						textlabel[i] = sampCreate3dText(ConvertNumber(ini5[donaterNick].money), 0xFFFFFF00, 0.0, 0.0, 0.35, 22, false, i, -1)
+					end
+				end
+			end
+		else
 			if textlabel[i] ~= nil then
 				sampDestroy3dText(textlabel[i])
 				textlabel[i] = nil
@@ -494,7 +549,6 @@ function sampev.onServerMessage(color, text)
 	if ini9[settings].Switch then
 		if string.find(text, u8:decode"Вы получили .+ вирт, от .+") and not string.find(text, ":") and not string.find(text, u8:decode".+ Вы получили ") and not string.find(text, u8:decode" сказал") then
 			summa, nickname = string.match(text, u8:decode"Вы получили (%d+) вирт, от (.+)%[")
-			
 			if ini9[settings].DonateNotify then
 				if tonumber(summa) == 100000 then
 					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {FF0000}100.000 {FFFFFF}вирт от {FF0000}" .. nickname, main_color) -- red
@@ -768,6 +822,7 @@ function sampev.onServerMessage(color, text)
 			end
 			
 			inicfg.save(ini10, directIni10)
+			restartTextLabelOverPlayerNickname()
 			return false
 		end
 	end
@@ -1118,6 +1173,7 @@ function sampev.onSendCommand(cmd)
 					end
 					inicfg.save(ini10, directIni10)
 				end
+				restartTextLabelOverPlayerNickname()
 			else
 				sampAddChatMessage(u8:decode" [Donatik] {FFFFFF} Ошибка.", main_color)
 			end
@@ -1154,18 +1210,18 @@ function imgui.OnDrawFrame()
 	end
 	if main_window_state.v then
 		resX, resY = getScreenResolution()
-		imgui.SetNextWindowPos(vec(137, 125))
-		imgui.SetNextWindowSize(vec(365, 243))
+		imgui.SetNextWindowPos(imgui.ImVec2(resX/2 - (resX/1.75)/2, resY/2 - (resY/1.85)/2))
+		imgui.SetNextWindowSize(imgui.ImVec2(resX/1.75, resY/1.85))
 		imgui.ShowCursor = true
 		imgui.Begin("Donatik " .. thisScript().version, main_window_state, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoScrollbar)
 		imgui.BeginChild('top', vec(210, 9), false)
-		imgui.BeginChild("##inp101", vec(59, 9), false)
+		imgui.BeginChild("##inp101", imgui.ImVec2(resX/10, resY/50), false)
 			if imgui.Selectable('		     Функции', imgui.settingsTab == 1) then
 				imgui.settingsTab = 1
 			end
 			imgui.EndChild()
 			imgui.SameLine()
-			imgui.BeginChild("##inp102",vec(59, 9), false)
+			imgui.BeginChild("##inp102", imgui.ImVec2(resX/10, resY/50), false)
 			if imgui.Selectable('		 Информация', imgui.settingsTab == 2) then
 				imgui.settingsTab = 2
 			end
@@ -1173,122 +1229,122 @@ function imgui.OnDrawFrame()
 		imgui.EndChild()
 		imgui.BeginChild('bottom', vec(358.5, 213), true)
 		if imgui.settingsTab == 1 then
-			if imgui.Button("Топ донатеры за день", vec(133.5/1.5, 10)) then
+			if imgui.Button("Топ донатеры за день", imgui.ImVec2(resX/7.18, resY/43)) then
 				cmd_donaters()
 			end
 			imgui.SameLine()
-			if imgui.HotKey("##1", ActiveDonaters, tLastKeys, toScreenX(25)) then
+			if imgui.HotKey("##1", ActiveDonaters, tLastKeys, resX/25.8) then
 				rkeys.changeHotKey(bindDonaters, ActiveDonaters.v)
 
 				ini9.hotkey.bindDonaters = encodeJson(ActiveDonaters.v)
 				inicfg.save(ini9, directIni9)
 			end
 			imgui.SameLine()
-			if imgui.Button("Топ донатеры за всё время", vec(133.5/1.5, 10)) then
-				cmd_topdonaters()
+			if imgui.Button("Топ донатеры за всё время", imgui.ImVec2(resX/7.18, resY/43)) then
+				cmd_topDonaters()
 			end
 			imgui.SameLine()
-			if imgui.HotKey("##2", ActiveTopDonaters, tLastKeys, toScreenX(25)) then
+			if imgui.HotKey("##2", ActiveTopDonaters, tLastKeys, resX/25.8) then
 				rkeys.changeHotKey(bindTopDonaters, ActiveTopDonaters.v)
 
 				ini9.hotkey.bindTopDonaters = encodeJson(ActiveTopDonaters.v)
 				inicfg.save(ini9, directIni9)
 			end
 			imgui.SameLine()
-			if imgui.Button("Топ донатеры на \"" .. ini1[DonateMoney].zielName .. "\"", vec(133.5/1.5, 10)) then
-				cmd_topdonaters()
+			if imgui.Button("Топ донатеры на \"" .. ini1[DonateMoney].zielName .. "\"", imgui.ImVec2(resX/7.18, resY/43)) then
+				cmd_topDonatersZiel()
 			end
 			imgui.SameLine()
-			if imgui.HotKey("##3", ActiveTopDonatersZiel, tLastKeys, toScreenX(25)) then
+			if imgui.HotKey("##3", ActiveTopDonatersZiel, tLastKeys, resX/25.8) then
 				rkeys.changeHotKey(bindTopDonatersZiel, ActiveTopDonatersZiel.v)
 
 				ini9.hotkey.bindTopDonatersZiel = encodeJson(ActiveTopDonatersZiel.v)
 				inicfg.save(ini9, directIni9)
 			end
-			if imgui.Button("Денег за сегодня собрано", vec(133.5/1.5, 10)) then
+			if imgui.Button("Денег за сегодня собрано", imgui.ImVec2(resX/7.18, resY/43)) then
 				cmd_todayDonateMoney()
 			end
 			imgui.SameLine()
-			if imgui.HotKey("##4", ActiveTodayDonateMoney, tLastKeys, toScreenX(25)) then
+			if imgui.HotKey("##4", ActiveTodayDonateMoney, tLastKeys, resX/25.8) then
 				rkeys.changeHotKey(bindTodayDonateMoney, ActiveTodayDonateMoney.v)
 
 				ini9.hotkey.bindTodayDonateMoney = encodeJson(ActiveTodayDonateMoney.v)
 				inicfg.save(ini9, directIni9)
 			end
 			imgui.SameLine()
-			if imgui.Button("Денег за все время собрано", vec(133.5/1.5, 10)) then
+			if imgui.Button("Денег за все время собрано", imgui.ImVec2(resX/7.18, resY/43)) then
 				cmd_DonateMoney()
 			end
 			imgui.SameLine()
-			if imgui.HotKey("##5", ActiveDonateMoney, tLastKeys, toScreenX(25)) then
+			if imgui.HotKey("##5", ActiveDonateMoney, tLastKeys, resX/25.8) then
 				rkeys.changeHotKey(bindDonateMoney, ActiveDonateMoney.v)
 
 				ini9.hotkey.bindDonateMoney = encodeJson(ActiveDonateMoney.v)
 				inicfg.save(ini9, directIni9)
 			end
 			imgui.SameLine()
-			if imgui.Button("Денег на \"" .. ini1[DonateMoney].zielName .."\" собрано", vec(133.5/1.5, 10)) then
+			if imgui.Button("Денег на \"" .. ini1[DonateMoney].zielName .."\" собрано", imgui.ImVec2(resX/7.18, resY/43)) then
 				cmd_DonateMoneyZiel()
 			end
 			imgui.SameLine()
-			if imgui.HotKey("##6", ActiveDonateMoneyZiel, tLastKeys, toScreenX(25)) then
+			if imgui.HotKey("##6", ActiveDonateMoneyZiel, tLastKeys, resX/25.8) then
 				rkeys.changeHotKey(bindDonateMoneyZiel, ActiveDonateMoneyZiel.v)
 
 				ini9.hotkey.bindDonateMoneyZiel = encodeJson(ActiveDonateMoneyZiel.v)
 				inicfg.save(ini9, directIni9)
 			end
-			imgui.PushItemWidth(toScreenX(116))
+			imgui.PushItemWidth(resX/25.8 + resX/7.18 + resX/25.8/11)
 			imgui.InputText("##inp1", text_buffer_nick)
 			imgui.PopItemWidth()
 			if imgui.IsItemHovered() then
 				imgui.BeginTooltip()
-				imgui.PushTextWrapPos(toScreenX(100))
+				imgui.PushTextWrapPos(resX/25.8 + resX/7.18 + resX/25.8/11)
 				imgui.TextUnformatted("Имя донатера")
 				imgui.PopTextWrapPos()
 				imgui.EndTooltip()
 			end
 			imgui.SameLine()
-			imgui.PushItemWidth(toScreenX(116))
+			imgui.PushItemWidth(resX/25.8 + resX/7.18 + resX/25.8/11)
 			imgui.InputText("##inp2", text_buffer_summa)
 			imgui.PopItemWidth()
 			if imgui.IsItemHovered() then
 				imgui.BeginTooltip()
-				imgui.PushTextWrapPos(toScreenX(100))
+				imgui.PushTextWrapPos(resX/25.8 + resX/7.18 + resX/25.8/11)
 				imgui.TextUnformatted("Сумма доната")
 				imgui.PopTextWrapPos()
 				imgui.EndTooltip()
 			end
 			imgui.SameLine()
-			if imgui.Button("Добавить донатера", vec(116, 10)) then
+			if imgui.Button("Добавить донатера", imgui.ImVec2(resX/25.8 + resX/7.18 + resX/25.8/11, resY/43)) then
 				if text_buffer_nick.v ~= nil and text_buffer_nick.v ~= "" and text_buffer_summa.v ~= nil and text_buffer_summa.v ~= "" and isNumber(text_buffer_summa.v) then
 					sampSendChat("/donater " .. text_buffer_nick.v .. " " .. text_buffer_summa.v)
 				else
 					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Ошибка. Введите в первое поле ник игрока, во второе сумму", main_color)
 				end
 			end
-			imgui.PushItemWidth(toScreenX(116))
+			imgui.PushItemWidth(resX/25.8 + resX/7.18 + resX/25.8/11)
 			imgui.InputText("##inp3", text_buffer_name)
 			imgui.PopItemWidth()
 			if imgui.IsItemHovered() then
 				imgui.BeginTooltip()
-				imgui.PushTextWrapPos(toScreenX(100))
+				imgui.PushTextWrapPos(resX/25.8 + resX/7.18 + resX/25.8/11)
 				imgui.TextUnformatted("Название цели")
 				imgui.PopTextWrapPos()
 				imgui.EndTooltip()
 			end
 			imgui.SameLine()
-			imgui.PushItemWidth(toScreenX(116))
+			imgui.PushItemWidth(resX/25.8 + resX/7.18 + resX/25.8/11)
 			imgui.InputText("##inp4", text_buffer_target)
 			imgui.PopItemWidth()
 			if imgui.IsItemHovered() then
 				imgui.BeginTooltip()
-				imgui.PushTextWrapPos(toScreenX(100))
+				imgui.PushTextWrapPos(resX/25.8 + resX/7.18 + resX/25.8/11)
 				imgui.TextUnformatted("Сумма цели")
 				imgui.PopTextWrapPos()
 				imgui.EndTooltip()
 			end
 			imgui.SameLine()
-			if imgui.Button("Установить цель", vec(116, 10)) then
+			if imgui.Button("Установить цель", imgui.ImVec2(resX/25.8 + resX/7.18 + resX/25.8/11, resY/43)) then
 				if text_buffer_name.v ~= nil and text_buffer_name.v ~= "" and text_buffer_target.v ~= nil and text_buffer_target.v ~= "" and isNumber(text_buffer_target.v) then
 					sampSendChat("/dziel " .. text_buffer_name.v .. " " .. text_buffer_target.v)
 				else
@@ -1297,45 +1353,44 @@ function imgui.OnDrawFrame()
 			end
 			if imgui.IsItemHovered() then
 				imgui.BeginTooltip()
-				imgui.PushTextWrapPos(toScreenX(100))
+				imgui.PushTextWrapPos(resX/25.8 + resX/7.18 + resX/25.8/11)
 				imgui.TextUnformatted("Текущая цель \"" .. ini1[DonateMoney].zielName .. "\" с суммой " .. ini1[DonateMoney].target)
 				imgui.PopTextWrapPos()
 				imgui.EndTooltip()
 			end
 			if InterfacePosition then
-				if imgui.Button("Фиксация HUDa", vec(116, 10)) then
+				if imgui.Button("Фиксация HUDa", imgui.ImVec2(resX/25.8 + resX/7.18 + resX/25.8/11, resY/43)) then
 					InterfacePosition = not InterfacePosition
 					inicfg.save(ini9, directIni9)
 				end
 			else
-				if imgui.Button("Зафиксировать HUD", vec(116, 10)) then
+				if imgui.Button("Зафиксировать HUD", imgui.ImVec2(resX/25.8 + resX/7.18 + resX/25.8/11, resY/43)) then
 					InterfacePosition = not InterfacePosition
 					inicfg.save(ini9, directIni9)
 				end
 			end
 			imgui.SameLine()
-			if imgui.Button("Отображение HUDa", vec(116, 10)) then
+			if imgui.Button("Отображение HUDa", imgui.ImVec2(resX/25.8 + resX/7.18 + resX/25.8/11, resY/43)) then
 				cmd_hud()
 			end
 			imgui.SameLine()
-			if imgui.HotKey("##7", ActiveHud, tLastKeys, toScreenX(116)) then
+			if imgui.HotKey("##7", ActiveHud, tLastKeys, resX/25.8 + resX/7.18 + resX/25.8/11) then
 				rkeys.changeHotKey(bindHud, ActiveHud.v)
 
 				ini9.hotkey.bindHud = encodeJson(ActiveHud.v)
 				inicfg.save(ini9, directIni9)
 			end
-			imgui.BufferingBar(percent, vec(355, 10), false)
+			imgui.BufferingBar(percent, imgui.ImVec2(3*(resX/25.8 + resX/7.18 + 2*resX/25.8/11), resY/43), false)
 			if imgui.IsItemHovered() then
 				imgui.BeginTooltip()
-				imgui.PushTextWrapPos(toScreenX(100))
+				imgui.PushTextWrapPos(resX/25.8 + resX/7.18 + resX/25.8/11)
 				imgui.TextUnformatted(string.format("Денег на цель \"%s\" собрано: %s/%s [%s]", ini1[DonateMoney].zielName, ini8[DonateMoneyZiel].money, ini8[DonateMoneyZiel].target, string.sub(tostring(percent * 100), 1, 5)))
 				imgui.PopTextWrapPos()
 				imgui.EndTooltip()
 				
 			end
-			
-			imgui.Dummy(vec(0, 2.5))
-			imgui.BeginChild("AA2", vec(175, 60), true)
+			imgui.Dummy(imgui.ImVec2(0, resY/256))
+			imgui.BeginChild("AA2", imgui.ImVec2((resX/1.75)/2.1, (resY/1.85)/4), true)
 			imgui.Columns(1, "Title1", true)
 			imgui.Text("За все время:  ".. ConvertNumber(ini1[DonateMoney].money) .. " вирт от " .. ConvertNumber(ini1[DonateMoney].count) .. " игроков")
 			imgui.Separator()
@@ -1369,7 +1424,9 @@ function imgui.OnDrawFrame()
 			imgui.EndChild()
 			
 			imgui.SameLine()
-			imgui.BeginChild("AA3", vec(175, 60), true)
+			imgui.Text(" ")
+			imgui.SameLine()
+			imgui.BeginChild("AA3", imgui.ImVec2((resX/1.75)/2.1225, (resY/1.85)/4), true)
 			imgui.Columns(1, "Title3", true)
 			imgui.Text("На цель \"" .. ini1[DonateMoney].zielName .. "\" за все время:  ".. ConvertNumber(ini8[DonateMoneyZiel].money) .. " вирт от " .. ConvertNumber(ini8[DonateMoneyZiel].count) .. " игроков")
 			imgui.Separator()
@@ -1402,8 +1459,8 @@ function imgui.OnDrawFrame()
 			imgui.Text("" .. ConvertNumber(ini10[TopPlayersZiel].thirdSumma))
 			imgui.EndChild()
 			
-			imgui.Dummy(vec(0, 2.5))
-			imgui.BeginChild("AA", vec(175, 60), true)
+			imgui.Dummy(imgui.ImVec2(0, resY/256))
+			imgui.BeginChild("AA", imgui.ImVec2((resX/1.75)/2.1, (resY/1.85)/4), true)
 			imgui.Columns(1, "Title2", true)
 			imgui.Text("За сегодня:  ".. ConvertNumber(ini2[todayDonateMoney].money) .. " вирт от " .. ini2[todayDonateMoney].count .. " игроков")
 			imgui.Separator()
@@ -1436,49 +1493,69 @@ function imgui.OnDrawFrame()
 			imgui.Text("" .. ConvertNumber(ini4[todayTopPlayers].thirdSumma))
 			imgui.EndChild()
 			
-			imgui.SetCursorPos(imgui.ImVec2(456, 294.5))
-			
+			imgui.SetCursorPos(imgui.ImVec2(resX/3.5, resY/3.05))
 			if imgui.Checkbox("Уведомления о донатах от игрока за все время ", imgui.ImBool(ini9.settings.DonatersNotify)) then
 				ini9.settings.DonatersNotify = not ini9.settings.DonatersNotify
 				inicfg.save(ini9, directIni9)
 			end
-			imgui.SetCursorPos(imgui.ImVec2(456, 319.5))
+			imgui.SetCursorPos(imgui.ImVec2(resX/3.5, resY/3.05 + resY/35))
 			if imgui.Checkbox("Уведомления о донатах от игрока за сегодня ", imgui.ImBool(ini9.settings.TodayDonatersNotify)) then
 				ini9.settings.DonatersNotify = not ini9.settings.DonatersNotify
 				inicfg.save(ini9, directIni9)
 			end
-			imgui.SetCursorPos(imgui.ImVec2(456, 344.5))
+			imgui.SetCursorPos(imgui.ImVec2(resX/3.5, resY/3.05 + 2*resY/35))
 			if imgui.Checkbox("Уведомления о донатах ", imgui.ImBool(ini9.settings.DonateNotify)) then
 				ini9.settings.DonatersNotify = not ini9.settings.DonatersNotify
 				inicfg.save(ini9, directIni9)
 			end
 			if imgui.IsItemHovered() then
 				imgui.BeginTooltip()
-				imgui.PushTextWrapPos(toScreenX(100))
+				imgui.PushTextWrapPos(resX/25.8 + resX/7.18 + resX/25.8/11)
 				imgui.TextUnformatted("Показывать количество полученных денег и ник донатера. Цвет доната меняется в зависимости от размера суммы")
 				imgui.PopTextWrapPos()
 				imgui.EndTooltip()
 			end
-			imgui.SetCursorPos(imgui.ImVec2(456, 369.5))
+			imgui.SameLine()
 			if imgui.Checkbox("Уведомления о цели", imgui.ImBool(ini9.settings.TargetNotify)) then
 				ini9.settings.TargetNotify = not ini9.settings.TargetNotify
 				inicfg.save(ini9, directIni9)
 			end
 			if imgui.IsItemHovered() then
 				imgui.BeginTooltip()
-				imgui.PushTextWrapPos(toScreenX(100))
+				imgui.PushTextWrapPos(resX/25.8 + resX/7.18 + resX/25.8/11)
 				imgui.TextUnformatted("Уведомлять при накоплении 25%, 50%, 75% и 100% суммы")
 				imgui.PopTextWrapPos()
 				imgui.EndTooltip()
 			end
-			imgui.SetCursorPos(imgui.ImVec2(456, 394.5))
+			imgui.SetCursorPos(imgui.ImVec2(resX/3.5, resY/3.05 + 3 * resY/35))
+			if imgui.Checkbox("Уведомление о заходе донатера от суммы: ", imgui.ImBool(ini9.settings.DonaterJoined)) then
+				ini9.settings.DonaterJoined = not ini9.settings.DonaterJoined
+				inicfg.save(ini9, directIni9)
+			end
+			imgui.SameLine()
+			imgui.PushItemWidth(resX/25.8)
+			if imgui.InputInt("##inp5", imgui.donateSize, 0, 1) then
+				if imgui.donateSize.v ~= nil and imgui.donateSize.v ~= "" and imgui.donateSize.v >= 0 then
+					ini9[settings].donateSize = imgui.donateSize.v
+					inicfg.save(ini9, directIni9)
+				end
+			end
+			imgui.PopItemWidth()
+			if imgui.IsItemHovered() then
+				imgui.BeginTooltip()
+				imgui.PushTextWrapPos(resX/25.8 + resX/7.18 + resX/25.8/11)
+				imgui.TextUnformatted("Показывать количество полученных денег и ник донатера. Цвет доната меняется в зависимости от размера суммы")
+				imgui.PopTextWrapPos()
+				imgui.EndTooltip()
+			end
+			imgui.SetCursorPos(imgui.ImVec2(resX/3.5, resY/3.05 + 4 * resY/35))
 			if imgui.Checkbox("Звук донатов ", imgui.ImBool(ini9.settings.Sound)) then
 				ini9.settings.Sound = not ini9.settings.Sound
 				inicfg.save(ini9, directIni9)
 			end
 			if imgui.IsItemHovered() then
 				imgui.BeginTooltip()
-				imgui.PushTextWrapPos(toScreenX(100))
+				imgui.PushTextWrapPos(resX/25.8 + resX/7.18 + resX/25.8/11)
 				imgui.TextUnformatted("Если звук отсутствует, требуется выставить минимальную громкость игрового радио и перезагрузить игру")
 				imgui.PopTextWrapPos()
 				imgui.EndTooltip()
@@ -1570,7 +1647,7 @@ function imgui.OnDrawFrame()
 			end
 			if imgui.IsItemHovered() then
 				imgui.BeginTooltip()
-				imgui.PushTextWrapPos(toScreenX(100))
+				imgui.PushTextWrapPos(resX/25.8 + resX/7.18 + resX/25.8/11)
 				imgui.TextUnformatted("Если выключить, то запись донатов прекратится")
 				imgui.PopTextWrapPos()
 				imgui.EndTooltip()
@@ -1594,7 +1671,7 @@ function imgui.OnDrawFrame()
 						end
 						if imgui.IsItemHovered() then
 							imgui.BeginTooltip()
-							imgui.PushTextWrapPos(toScreenX(100))
+							imgui.PushTextWrapPos(resX/25.8 + resX/7.18 + resX/25.8/11)
 							imgui.TextUnformatted("Да да я")
 							imgui.PopTextWrapPos()
 							imgui.EndTooltip()
@@ -1609,7 +1686,7 @@ function imgui.OnDrawFrame()
 				end
 				if imgui.IsItemHovered() then
 					imgui.BeginTooltip()
-					imgui.PushTextWrapPos(toScreenX(100))
+					imgui.PushTextWrapPos(resX/25.8 + resX/7.18 + resX/25.8/11)
 					imgui.TextUnformatted("Да да я")
 					imgui.PopTextWrapPos()
 					imgui.EndTooltip()
@@ -1671,6 +1748,7 @@ end
 
 function imgui.initBuffers()
 	imgui.settingsTab = 1
+	imgui.donateSize = imgui.ImInt(ini9[settings].donateSize)
 end
 
 function isNumber(n)
