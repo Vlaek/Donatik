@@ -1,7 +1,7 @@
 script_name("Donatik")
 script_author("bier")
-script_version("15/09/2020")
-script_version_number(4)
+script_version("26/10/2020")
+script_version_number(5)
 script_url("https://vlaek.github.io/Donatik/")
 script.update = false
 
@@ -30,6 +30,8 @@ local ini12 = {}
 local tLastKeys = {}
 
 local main_window_state = imgui.ImBool(false)
+local help_window_state = imgui.ImBool(false)
+local diagram_window_state = imgui.ImBool(false)
 local resX, resY = getScreenResolution()
 local text_buffer_target = imgui.ImBuffer(256)
 local text_buffer_name = imgui.ImBuffer(256)
@@ -38,9 +40,11 @@ local text_buffer_summa = imgui.ImBuffer(256)
 
 imgui.BufferingBar = require('imgui_addons').BufferingBar
 local InterfacePosition = true
+local slider = imgui.ImInt(1)
 
 local main_color = 0xFFFF00
 local percent = 0
+local diagramBool = true
 
 function main()
 	if not isSampLoaded() or not isSampfuncsLoaded() then return end
@@ -76,11 +80,17 @@ function main()
 	directIni9  = string.format("Donatik\\%s\\%s\\Settings.ini", server, my_name)
 	directIni11 = string.format("Donatik\\%s\\%s\\DonatersRating.ini", server, my_name)
 	
-	Wait = lua_thread.create_suspended(Waiting)
-	Wait2 = lua_thread.create_suspended(Waiting2)
-	Wait3 = lua_thread.create_suspended(Waiting3)
+	WaitDonaters = lua_thread.create_suspended(WaitingDonaters)
+	WaitDonatersAllTime = lua_thread.create_suspended(WaitingDonatersAllTime)
+	WaitDonatersZiel = lua_thread.create_suspended(WaitingDonatersZiel)
+	
+	WaitCountAllTime = lua_thread.create_suspended(WaitingCountAllTime)
+	WaitCountZiel = lua_thread.create_suspended(WaitingCountZiel)
+	
 	WaitSelectedDay = lua_thread.create_suspended(WaitingSelectedDay)
 	WaitDonaterInfo = lua_thread.create_suspended(WaitingDonaterInfo)
+	
+	WaitSMS = lua_thread.create_suspended(WaitingSMS)
 	
 	sampRegisterChatCommand('dHud', menu)
 	sampRegisterChatCommand("donaters", cmd_donaters)
@@ -90,9 +100,9 @@ function main()
 	sampRegisterChatCommand("DonateMoney", cmd_DonateMoney)
 	sampRegisterChatCommand("DonateMoneyZiel", cmd_DonateMoneyZiel)
 	sampRegisterChatCommand("dHudik", cmd_hud)
+	sampRegisterChatCommand("dtop", cmd_topN) 
+	sampRegisterChatCommand("dtopZiel", cmd_topZielN)
 	sampRegisterChatCommand("dHelp", cmd_dHelp)
-	sampRegisterChatCommand("dtest", donatersRating)
-	sampRegisterChatCommand("dtest2", donatersZielRating)
 	
 	DonateMoney = string.format('DonateMoney')
 	if ini1[DonateMoney] == nil then
@@ -185,13 +195,13 @@ function main()
 	if ini9[hotkey] == nil then
 		ini9 = inicfg.load({
 			[hotkey] = {
-				bindDonaters="[18,49]",
-				bindTopDonaters="[18,50]",
-				bindTopDonatersZiel="[18,51]",
-				bindTodayDonateMoney="[18,52]",
-				bindDonateMoney="[18,53]",
-				bindDonateMoneyZiel="[18,54]",
-				bindHud="[18,72]"
+				bindDonaters		 = "[18,49]",
+				bindTopDonaters		 = "[18,50]",
+				bindTopDonatersZiel	 = "[18,51]",
+				bindTodayDonateMoney = "[18,52]",
+				bindDonateMoney 	 = "[18,53]",
+				bindDonateMoneyZiel	 = "[18,54]",
+				bindHud 		   	 = "[18,72]"
 			}
 		}, directIni9)
 		inicfg.save(ini9, directIni9)
@@ -509,10 +519,6 @@ function donaterZielPlace(nickname)
 	end
 end
 
-function cmd_donaters()
-	Wait:run()
-end
-
 function menu()
 	main_window_state.v = not main_window_state.v
 	imgui.Process = main_window_state.v
@@ -532,12 +538,24 @@ function cmd_target(arg)
 	sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Установлена новая цель: {40E0D0}" .. ini1[DonateMoney].target, main_color)
 end
 
+function cmd_donaters()
+	WaitDonaters:run()
+end
+
 function cmd_topDonaters()
-	Wait2:run()
+	WaitDonatersAllTime:run()
 end
 
 function cmd_topDonatersZiel()
-	Wait3:run()
+	WaitDonatersZiel:run()
+end
+
+function cmd_topN(arg) --topN
+	WaitCountAllTime:run(arg)
+end
+
+function cmd_topZielN(arg) --topN
+	WaitCountZiel:run(arg)
 end
 
 function cmd_todayDonateMoney()
@@ -552,7 +570,7 @@ function cmd_DonateMoneyZiel()
 	sampSendChat(string.format(u8:decode"Денег на цель \"%s\" собрано: %s/%s [%s]", ini1[DonateMoney].zielName, ConvertNumber(ini8[DonateMoneyZiel].money), ConvertNumber(ini8[DonateMoneyZiel].target), string.sub(tostring(percent * 100), 1, 5)))
 end
 
-function Waiting()
+function WaitingDonaters()
 	sampSendChat(u8:decode"Список пожертвований от уважаемых людей за сегодня: ")
 	wait(1150)
 	sampSendChat(u8:decode"1. Господин " .. ini4[todayTopPlayers].firstName .. u8:decode" с суммой " .. ConvertNumber(ini4[todayTopPlayers].firstSumma) .. u8:decode" вирт")
@@ -564,7 +582,7 @@ function Waiting()
 	sampSendChat(u8:decode"Чтобы занять определенное место в списке, необходимо пожертвовать больше денег")
 end
 
-function Waiting2()
+function WaitingDonatersAllTime()
 	sampSendChat(u8:decode"Список пожертвований от уважаемых людей за все время: ")
 	wait(1150)
 	sampSendChat(u8:decode"1. Господин " .. ini3[TopPlayers].firstName .. u8:decode" с суммой " .. ConvertNumber(ini3[TopPlayers].firstSumma) .. u8:decode" вирт")
@@ -576,7 +594,7 @@ function Waiting2()
 	sampSendChat(u8:decode"Чтобы занять определенное место в списке, необходимо пожертвовать больше денег")
 end
 
-function Waiting3()
+function WaitingDonatersZiel()
 	sampSendChat(u8:decode"Список пожертвований от уважаемых людей на \"" .. ini1[DonateMoney].zielName .. u8:decode"\" за все время")
 	wait(1150)
 	sampSendChat(u8:decode"1. Господин " .. ini10[TopPlayersZiel].firstName .. u8:decode" с суммой " .. ConvertNumber(ini10[TopPlayersZiel].firstSumma) .. u8:decode" вирт")
@@ -586,6 +604,34 @@ function Waiting3()
 	sampSendChat(u8:decode"3. Господин " .. ini10[TopPlayersZiel].thirdName .. u8:decode" с суммой " .. ConvertNumber(ini10[TopPlayersZiel].thirdSumma) .. u8:decode" вирт")
 	wait(1150)
 	sampSendChat(u8:decode"Чтобы занять определенное место в списке, необходимо пожертвовать больше денег")
+end
+
+function WaitingCountAllTime(arg)
+	donatersRating()
+	sampSendChat(u8:decode"Список пожертвований от уважаемых людей за все время: ")
+	for i = 0, arg do
+		ini11 = inicfg.load(i, directIni11)
+		if ini11[i] ~= nil then
+			wait(1150)
+			sampSendChat(i .. u8:decode". Господин " .. ini11[i].nick .. u8:decode" с суммой " .. ConvertNumber(ini11[i].money) .. u8:decode" вирт")
+		end
+	end
+	wait(1150)
+	sampSendChat(u8:decode"Всего " .. ConvertNumber(ini11[PlayerCount].count) .. u8:decode" пожертвующих")
+end
+
+function WaitingCountZiel(arg)
+	donatersZielRating()
+	sampSendChat(u8:decode"Список пожертвований от уважаемых людей на \"" .. ini1[DonateMoney].zielName .. u8:decode"\" за все время")
+	for i = 0, arg do
+		ini12 = inicfg.load(i, directIni12)
+		if ini12[i] ~= nil then
+			wait(1150)
+			sampSendChat(i .. u8:decode". Господин " .. ini12[i].nick .. u8:decode" с суммой " .. ConvertNumber(ini12[i].money) .. u8:decode" вирт")
+		end
+	end
+	wait(1150)
+	sampSendChat(u8:decode"Всего " .. ConvertNumber(ini12[PlayerZielCount].count) .. u8:decode" пожертвующих")
 end
 
 function WaitingSelectedDay(d, m, y, firstName, firstSumma, secondName, secondSumma, thirdName, thirdSumma)
@@ -626,6 +672,15 @@ function WaitingDonaterInfo(PlayerName)
 	end
 end
 
+function WaitingSMS(id)
+	wait(1150)
+	sampSendChat(u8:decode"/sms " .. id .. u8:decode" Ты попал в видео с благодарностью за пожертвование")
+	wait(1150)
+	sampSendChat(u8:decode"/sms " .. id .. u8:decode" Посмотреть можно на ютубе с названием:")
+	wait(1150)
+	sampSendChat(u8:decode"/sms " .. id .. u8:decode" SAMP RP Revolution 2020 - Благодарность работягам №2")
+end
+
 function cmd_dHelp()
 	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/dhud {FFFFFF}- включить главное меню скрипта", main_color)
 	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/dhudik {FFFFFF}- включить Donatik HUD", main_color)
@@ -638,13 +693,15 @@ function cmd_dHelp()
 	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/todaydonateMoney {FFFFFF}- вывести накопленные деньги за сегодня", main_color)
 	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/donatemoney {FFFFFF}- вывести накопленные деньги за все время", main_color)
 	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/donatemoneyziel {FFFFFF}- вывести накопленные деньги для текущей цели", main_color)
-	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/donaterinfo [Ник игрока] {FFFFFF}- вывести в общий чат информацию о игроке", main_color)
+	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/donatername [Ник игрока] {FFFFFF}- вывести в общий чат информацию о игроке", main_color)
+	sampAddChatMessage(u8:decode" [Donatik] {40E0D0}/donaterid [id игрока] {FFFFFF}- вывести в общий чат информацию о игроке", main_color)
 end
 
 function sampev.onServerMessage(color, text)
 	if ini9[settings].Switch then
 		if string.find(text, u8:decode"Вы получили .+ вирт, от .+") and not string.find(text, ":") and not string.find(text, u8:decode".+ Вы получили ") and not string.find(text, u8:decode" сказал") then
 			summa, nickname = string.match(text, u8:decode"Вы получили (%d+) вирт, от (.+)%[")
+			diagramBool = true
 			if ini9[settings].DonateNotify then
 				if tonumber(summa) == 100000 then
 					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Вы получили {FF0000}100.000 {FFFFFF}вирт от {FF0000}" .. nickname, main_color) -- red
@@ -772,7 +829,7 @@ function sampev.onServerMessage(color, text)
 					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Сумма пожертвований от {40E0D0}" .. nickname .. u8:decode"{FFFFFF} составляет: {40E0D0}" .. ConvertNumber(ini5[Player].money), main_color)
 				end
 				--ТУТ НАЙТИ ИГРОКА в DonatersRaiting--
-				for i = 0, tonumber(ini11[PlayerCount].count + 1) do
+				lua_thread.create(function() for i = 0, tonumber(ini11[PlayerCount].count + 1) do
 					ini11 = inicfg.load(i, directIni11)
 					if ini11[i] ~= nil then
 						if ini11[i].nick == nickname then
@@ -780,10 +837,10 @@ function sampev.onServerMessage(color, text)
 							inicfg.save(ini11, directIni11)
 						end
 					end
-				end
+				end end)
+				
 			end
 			inicfg.save(ini5, directIni5)
-			donatersRating()
 				
 			PlayerZiel = string.format('%s', nickname)
 			if ini7[PlayerZiel] == nil then
@@ -811,7 +868,7 @@ function sampev.onServerMessage(color, text)
 			else
 				ini7[PlayerZiel].money = ini7[PlayerZiel].money + summa
 				--ТУТ НАЙТИ ИГРОКА в DonatersRaiting--
-				for i = 0, tonumber(ini12[PlayerZielCount].count + 1) do
+				lua_thread.create(function() for i = 0, tonumber(ini12[PlayerZielCount].count + 1) do
 					ini12 = inicfg.load(i, directIni12)
 					if ini12[i] ~= nil then
 						if ini12[i].nick == nickname then
@@ -819,10 +876,10 @@ function sampev.onServerMessage(color, text)
 							inicfg.save(ini12, directIni12)
 						end
 					end
-				end
+				end end)
+				
 			end
 			inicfg.save(ini7, directIni7)
-			donatersZielRating()
 			
 			todayPlayer = string.format('%s-%s-%s-%s', my_day, my_month, my_year, nickname)
 			if ini6[todayPlayer] == nil then
@@ -980,9 +1037,16 @@ function sampev.onSendCommand(cmd)
 		table.insert(args, arg)
 	end
 	
-	if args[1] == '/donaterinfo' then
+	if args[1] == '/donatername' then
 		if args[2] then
 			WaitDonaterInfo:run(args[2])
+		end
+	end
+	if args[1] == '/donaterid' then
+		if args[2] and isNumber(args[2]) and tonumber(args[2]) >= 0 and tonumber(args[2]) < 1000 and math.fmod(tonumber(args[2]), 1) == 0 and sampIsPlayerConnected(args[2]) then
+			WaitDonaterInfo:run(sampGetPlayerNickname(args[2]))
+		else
+			sampAddChatMessage(u8:decode" [Donatik]{FFFFFF} Ошибка", main_color)
 		end
 	end
 	if args[1] == '/donater' then
@@ -992,9 +1056,23 @@ function sampev.onSendCommand(cmd)
 				if ini5[Player] == nil then
 					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Господин {40E0D0}" .. args[2] .. u8:decode" {FFFFFF}в базе данных не обнаружен", main_color)
 				else
-					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Сумма пожертвований от {40E0D0}" .. ini5[Player].nick .. u8:decode" {FFFFFF}составляет: {40E0D0}" .. ConvertNumber(ini5[Player].money), main_color)
+					if donaterZielPlace(ini5[Player].nick) ~= nil then
+						sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Господин {40E0D0}" .. ini5[Player].nick .. u8:decode" {FFFFFF}находится на " .. donaterPlace(ini5[Player].nick) .. u8:decode" месте в списке за все время и на " .. donaterZielPlace(ini5[Player].nick) .. u8:decode" в списке на цель {40E0D0}\"" .. ini1[DonateMoney].zielName .. "\"", main_color)
+					else
+						sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Господин {40E0D0}" .. ini5[Player].nick .. u8:decode" {FFFFFF}находится на " .. donaterPlace(ini5[Player].nick) .. u8:decode" {FFFFFF}месте в списке за все время", main_color)
+					end
+					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Сумма пожертвований за все время составляет: {40E0D0}" .. ConvertNumber(ini5[Player].money), main_color)
+					if ini7[Player] ~= nil then
+						sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}На цель {40E0D0}\"" .. ini1[DonateMoney].zielName .. u8:decode"\"{FFFFFF} составляет: {40E0D0}" .. ConvertNumber(ini7[Player].money), main_color)
+					end
+					todayPlayer = string.format('%s-%s-%s-%s', my_day, my_month, my_year, args[2])
+					if ini6[todayPlayer] == nil then
+						sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Сегодня пожертвований не было", main_color)
+					else
+						sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}За сегодня составляет: {40E0D0}" .. ConvertNumber(ini6[todayPlayer].money), main_color)
+					end
 				end
-			elseif args[3] ~= nil and args[3] ~= "" and isNumber(args[3]) then
+			elseif args[3] ~= nil and args[3] ~= "" and isNumber(args[3]) and math.fmod(tonumber(args[3]), 1) == 0 then
 			
 				tempSumma = ini8[DonateMoneyZiel].money
 				
@@ -1511,7 +1589,7 @@ function imgui.OnDrawFrame()
 			end
 			imgui.SameLine()
 			if imgui.Button("Добавить донатера", vec(116, 10)) then
-				if text_buffer_nick.v ~= nil and text_buffer_nick.v ~= "" and text_buffer_summa.v ~= nil and text_buffer_summa.v ~= "" and isNumber(text_buffer_summa.v) then
+				if text_buffer_nick.v ~= nil and text_buffer_nick.v ~= "" and text_buffer_summa.v ~= nil and text_buffer_summa.v ~= "" and isNumber(text_buffer_summa.v) and math.fmod(tonumber(text_buffer_summa.v), 1) == 0 then
 					sampSendChat("/donater " .. text_buffer_nick.v .. " " .. text_buffer_summa.v)
 				else
 					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Ошибка. Введите в первое поле ник игрока, во второе сумму", main_color)
@@ -1540,7 +1618,7 @@ function imgui.OnDrawFrame()
 			end
 			imgui.SameLine()
 			if imgui.Button("Установить цель", vec(116, 10)) then
-				if text_buffer_name.v ~= nil and text_buffer_name.v ~= "" and text_buffer_target.v ~= nil and text_buffer_target.v ~= "" and isNumber(text_buffer_target.v) then
+				if text_buffer_name.v ~= nil and text_buffer_name.v ~= "" and text_buffer_target.v ~= nil and text_buffer_target.v ~= "" and isNumber(text_buffer_target.v) and math.fmod(tonumber(text_buffer_target.v), 1) == 0 then
 					sampSendChat("/dziel " .. text_buffer_name.v .. " " .. text_buffer_target.v)
 				else
 					sampAddChatMessage(u8:decode" [Donatik] {FFFFFF}Ошибка. Введите в первое поле название цели, во второе сумму", main_color)
@@ -1772,8 +1850,16 @@ function imgui.OnDrawFrame()
 			imgui.SameLine()
 			imgui.Text(" История донатов:")
 			
-			if imgui.Button("Перезагрузить скрипт", vec(174, 0)) then
+			if imgui.Button("Команды", vec(170/3, 0)) then
+				help_window_state.v = not help_window_state.v
+			end
+			imgui.SameLine()
+			if imgui.Button("Перезагрузить", vec(170/3, 0)) then 
 				thisScript():reload()
+			end
+			imgui.SameLine()
+			if imgui.Button("График", vec(170/3, 0)) then 
+				diagram_window_state.v = not diagram_window_state.v
 			end
 			imgui.SameLine()
 			imgui.BeginChild('History', vec(175, 190), true)
@@ -1893,24 +1979,28 @@ function imgui.OnDrawFrame()
 				if sampIsPlayerConnected(i) then
 					donaterNick = sampGetPlayerNickname(i)
 					if ini5[donaterNick] ~= nil then
-						if donaterNick == ini5[donaterNick].nick then
+						if donaterNick == ini5[donaterNick].nick and ini5[donaterNick].money >= slider.v then
 							donatersCount = donatersCount + 1
 						end
 					end
 				end
 			end
 			imgui.Text(" ")
-			imgui.Text(" Донатеры онлайн " .. donatersCount)
-			imgui.BeginChild('DonatersOnline', vec(175, 137), true)
+			imgui.Text(" Донатеры онлайн " .. donatersCount .. "	")
+			imgui.SameLine()
+			imgui.PushItemWidth(toScreenX(113))
+			if imgui.SliderInt("##inp7", slider, 1, 100000) then end
+			imgui.PopItemWidth()
+			imgui.BeginChild('DonatersOnline', vec(175, 135), true)
 				for i = 0, 1000 do
 					if sampIsPlayerConnected(i) then
 						donaterNick = sampGetPlayerNickname(i)
-						if ini5[donaterNick] ~= nil then
-							if donaterNick == ini5[donaterNick].nick then
-								if imgui.CollapsingHeader(string.format('%s [%s]', ini5[donaterNick].nick, i)) then
+						if ini7[donaterNick] ~= nil then
+							if donaterNick == ini7[donaterNick].nick and ini7[donaterNick].money >= slider.v then
+								if imgui.CollapsingHeader(string.format('%s [%s]', ini7[donaterNick].nick, i)) then
 									imgui.PushTextWrapPos(toScreenX(185))
-									imgui.BeginChild(string.format('%s', ini5[donaterNick].nick), vec(163, 40), true)
-									imgui.Text(" За всё время: " .. ConvertNumber(ini5[donaterNick].money))
+									imgui.BeginChild(string.format('%s', ini7[donaterNick].nick), vec(163, 40), true)
+									imgui.Text(" За всё время: " .. ConvertNumber(ini7[donaterNick].money))
 									imgui.Separator()
 									if ini7[donaterNick] ~= nil then
 										imgui.Text(" На цель: " .. ConvertNumber(ini7[donaterNick].money))
@@ -1925,8 +2015,12 @@ function imgui.OnDrawFrame()
 										imgui.Text(" За сегодня: нет")
 									end
 									imgui.EndChild()
-									if imgui.Button("Вывести информацию о донатере", vec(163, 0)) then	
+									if imgui.Button("Вывести информацию о донатере", vec(140, 0)) then	
 										WaitDonaterInfo:run(donaterNick)
+									end
+									imgui.SameLine()
+									if imgui.Button("SMS", vec(23, 0)) then	
+										WaitSMS:run(i)
 									end
 									imgui.PopTextWrapPos()
 								end
@@ -1937,6 +2031,124 @@ function imgui.OnDrawFrame()
 			imgui.EndChild()
 		end
 		imgui.EndChild()
+		imgui.End()
+	end
+	if help_window_state.v then
+		imgui.SetNextWindowPos(vec(100, 100), 2)
+		imgui.SetNextWindowSize(vec(207, 175))
+		imgui.Begin("Команды ", help_window_state, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoScrollbar)
+		
+		imgui.BeginChild('Help', vec(200, 155), true)
+		imgui.TextColoredRGB(u8:decode"  {40E0D0}/dhud {FFFFFF}- включить главное меню скрипта")
+		imgui.TextColoredRGB(u8:decode"  {40E0D0}/dhudik {FFFFFF}- включить Donatik HUD")
+		imgui.TextColoredRGB(u8:decode"  {40E0D0}/donater [Ник игрока] [Количество денег] {FFFFFF}- добавить донатера")
+		imgui.TextColoredRGB(u8:decode"  {40E0D0}/donater [Ник игрока] {FFFFFF}- вывести информацию о игроке (только себе)")
+		imgui.TextColoredRGB(u8:decode"  {40E0D0}/dziel [Название цели] [Количество денег] {FFFFFF}- установить цель сбора")
+		imgui.TextColoredRGB(u8:decode"  {40E0D0}/donaters {FFFFFF}- вывести список донатеров за сегодня")
+		imgui.TextColoredRGB(u8:decode"  {40E0D0}/topdonaters {FFFFFF}- вывести список топ донатеров за все время")
+		imgui.TextColoredRGB(u8:decode"  {40E0D0}/topdonatersZiel {FFFFFF}- вывести топ донатеров за все время для цели")
+		imgui.TextColoredRGB(u8:decode"  {40E0D0}/todaydonateMoney {FFFFFF}- вывести накопленные деньги за сегодня")
+		imgui.TextColoredRGB(u8:decode"  {40E0D0}/donatemoney {FFFFFF}- вывести накопленные деньги за все время")
+		imgui.TextColoredRGB(u8:decode"  {40E0D0}/donatemoneyziel {FFFFFF}- вывести накопленные деньги для текущей цели")
+		imgui.TextColoredRGB(u8:decode"  {40E0D0}/donatername [Ник игрока] {FFFFFF}- вывести в общий чат информацию о игроке")
+		imgui.TextColoredRGB(u8:decode"  {40E0D0}/donaterid [id игрока] {FFFFFF}- вывести в общий чат информацию о игроке")
+		imgui.TextColoredRGB(u8:decode"  {40E0D0}/dtop [N] {FFFFFF}- вывести в общий чат N-список донатеров")
+		imgui.TextColoredRGB(u8:decode"  {40E0D0}/dtopZiel [N] {FFFFFF}- вывести в общий чат N-список донатеров для текущей цели")
+		imgui.EndChild()
+		
+		imgui.End()
+	end
+	if diagram_window_state.v then
+		imgui.SetNextWindowPos(vec(100, 100), 2)
+		imgui.SetNextWindowSize(vec(417, 330))
+		imgui.Begin("График ", diagram_window_state, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoScrollbar)
+		
+		local diagramSumma = 0
+		local diagramPercent = 0
+		local days = 0
+		
+		imgui.BeginChild('Diagram', vec(410, 300), true)
+
+		if tostring(my_month) == tostring("01") or tostring(my_month) == tostring("03") or tostring(my_month) == tostring("05") or tostring(my_month) == tostring("07") or tostring(my_month) == tostring("08") or tostring(my_month) == tostring("10") or tostring(my_month) == tostring("12") then
+			days = 31
+		end
+		if tostring(my_month) == tostring("04") or tostring(my_month) == tostring("06") or tostring(my_month) == tostring("09") or tostring(my_month) == tostring("11") then
+			days = 30
+		end
+		if tostring(my_month) == tostring("02") and isNumber(my_year/4) and math.fmod(tonumber(my_year/4), 1) == 0  then
+			days = 29
+		else
+			if tostring(my_month) == tostring("02") then
+				days = 28
+			end
+		end
+		
+		
+		for i = 1, days do
+			if tonumber(i) > 0 and tonumber(i) < 10 then i = string.format('0%d', i) end
+			todayDonateMoneySelectedDay = string.format('DonateMoney-%s-%s-%s', i, my_month, my_year)
+			if ini2[todayDonateMoneySelectedDay] ~= nil and ini2[todayDonateMoneySelectedDay].money ~= 0 then
+				diagramSumma = diagramSumma + ini2[todayDonateMoneySelectedDay].money
+			end
+		end
+		
+		for i = 1, days do
+			if tonumber(i) > 0 and tonumber(i) < 10 then i = string.format('0%d', i) end
+			todayDonateMoneySelectedDay = string.format('DonateMoney-%s-%s-%s', i, my_month, my_year)
+			if ini2[todayDonateMoneySelectedDay] ~= nil and ini2[todayDonateMoneySelectedDay].money ~= 0 then
+				diagramSumma = diagramSumma + ini2[todayDonateMoneySelectedDay].money
+			end
+			if tonumber(i) == tonumber(os.date("%d")) and tonumber(my_month) == tonumber(os.date("%m")) then
+				imgui.TextColoredRGB("{FF0000}" .. string.format('%s.%s.%s  {FFFFFF}- ', i, my_month, my_year))
+			else
+				imgui.Text(string.format('%s.%s.%s  - ', i, my_month, my_year))
+			end
+			imgui.SameLine()
+			if ini2[todayDonateMoneySelectedDay] ~= nil and ini2[todayDonateMoneySelectedDay].money ~= 0 and ini2[todayDonateMoneySelectedDay].money > 0 then
+				diagramPercent = ini2[todayDonateMoneySelectedDay].money / diagramSumma * 100
+				imgui.TextColoredRGB("{FFFF00}[")
+				imgui.SameLine()
+				for j = 1, round(diagramPercent, 1) do
+					imgui.TextColoredRGB("{FFFF00}|")
+					imgui.SameLine()
+				end
+				local ost = 100 - round(diagramPercent, 1)
+				for j = 1, ost do
+					imgui.TextColoredRGB("{FFFFFF}|")
+					imgui.SameLine()
+				end
+				imgui.TextColoredRGB("{FFFF00}]")
+				imgui.SameLine()
+				imgui.Text(" -  " .. ConvertNumber(ini2[todayDonateMoneySelectedDay].money))
+			else
+				imgui.TextColoredRGB("{FFFF00}[")
+				imgui.SameLine()
+				for j = 1, 100 do
+					imgui.TextColoredRGB("{FFFFFF}|")
+					imgui.SameLine()
+				end
+				imgui.TextColoredRGB("{FFFF00}]")
+				imgui.SameLine()
+				imgui.Text(" -  0")
+			end
+		end
+
+		imgui.EndChild()	
+			if imgui.Button("Назад", vec(170/3, 0)) then
+				if tonumber(my_year) >= tonumber(2020) and tonumber(my_month) >= 2 then
+					my_month = my_month - 1
+					if tonumber(my_month) > 0 and tonumber(my_month) < 10 then my_month = string.format('0%d', my_month) end
+					if tonumber(my_month) == 0 then my_month = string.format('12') my_year = my_year - 1 end
+				end
+			end
+			imgui.SameLine()
+			if imgui.Button("Вперед", vec(170/3, 0)) then
+				if tonumber(my_month) < tonumber(os.date("%m")) then
+					my_month = my_month + 1
+					if tonumber(my_month) > 0 and tonumber(my_month) < 10 then my_month = string.format('0%d', my_month) end
+					if tonumber(my_month) == 13 then my_month = string.format('01') my_year = my_year + 1 end
+				end
+			end
 		imgui.End()
 	end
 end
@@ -2013,6 +2225,58 @@ function imgui.ApplyCustomStyle()
 	colors[clr.PlotHistogram]          = ImVec4(0.90, 0.70, 0.00, 1.00)
 	colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 0.60, 0.00, 1.00)
 	colors[clr.ModalWindowDarkening]   = ImVec4(0.80, 0.80, 0.80, 0.35)
+end
+
+function imgui.TextColoredRGB(text)
+    local style = imgui.GetStyle()
+    local colors = style.Colors
+    local ImVec4 = imgui.ImVec4
+
+    local explode_argb = function(argb)
+        local a = bit.band(bit.rshift(argb, 24), 0xFF)
+        local r = bit.band(bit.rshift(argb, 16), 0xFF)
+        local g = bit.band(bit.rshift(argb, 8), 0xFF)
+        local b = bit.band(argb, 0xFF)
+        return a, r, g, b
+    end
+
+    local getcolor = function(color)
+        if color:sub(1, 6):upper() == 'SSSSSS' then
+            local r, g, b = colors[1].x, colors[1].y, colors[1].z
+            local a = tonumber(color:sub(7, 8), 16) or colors[1].w * 255
+            return ImVec4(r, g, b, a / 255)
+        end
+        local color = type(color) == 'string' and tonumber(color, 16) or color
+        if type(color) ~= 'number' then return end
+        local r, g, b, a = explode_argb(color)
+        return imgui.ImColor(r, g, b, a):GetVec4()
+    end
+
+    local render_text = function(text_)
+        for w in text_:gmatch('[^\r\n]+') do
+            local text, colors_, m = {}, {}, 1
+            w = w:gsub('{(......)}', '{%1FF}')
+            while w:find('{........}') do
+                local n, k = w:find('{........}')
+                local color = getcolor(w:sub(n + 1, k - 1))
+                if color then
+                    text[#text], text[#text + 1] = w:sub(m, n - 1), w:sub(k + 1, #w)
+                    colors_[#colors_ + 1] = color
+                    m = n
+                end
+                w = w:sub(1, n - 1) .. w:sub(k + 1, #w)
+            end
+            if text[0] then
+                for i = 0, #text do
+                    imgui.TextColored(colors_[i] or colors[1], u8(text[i]))
+                    imgui.SameLine(nil, 0)
+                end
+                imgui.NewLine()
+            else imgui.Text(u8(w)) end
+        end
+    end
+
+    render_text(text)
 end
 
 function toScreenY(gY)
@@ -2095,4 +2359,18 @@ function ConvertNumber(number)
 		count = math.floor(number / 1000000) ost = math.floor(math.fmod(number, 1000000)/1000)  if ost == 0 then ost = "000" end if tonumber(ost) > 0 and tonumber(ost) < 10 then ost3 = ost ost = string.format("00%s", ost3) end if tonumber(ost) > 10 and tonumber(ost) < 100 then ost3 = ost ost = string.format("0%s", ost3) end ost2 = math.fmod(math.fmod(number, 1000000), 1000) if ost2 == 0 then ost2 = "000" end if tonumber(ost2) > 0 and tonumber(ost2) < 10 then ost4 = ost2 ost2 = string.format("00%s", ost4) end if tonumber(ost2) > 10 and tonumber(ost2) < 100 then ost4 = ost2 ost2 = string.format("0%s", ost4) end zahl = string.format("%s.%s.%s", count, ost, ost2)
 	end
 	return zahl
+end
+
+function MakePercent(what, step)
+	local int, float = math.modf(what - what % step) 
+	if float >= 5 then
+		return int + 1
+	else
+		return int
+	end
+end
+
+function round(exact, quantum)
+    local quant,frac = math.modf(exact/quantum)
+    return quantum * (quant + (frac > 0.5 and 1 or 0))
 end
