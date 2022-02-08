@@ -1,7 +1,7 @@
 script_name("Donatik")
 script_author("bier")
 script_version("08.02.2022")
-script_version_number(12)
+script_version_number(13)
 script_url("https://vlaek.github.io/Donatik/")
 script.update = false
 
@@ -1189,9 +1189,8 @@ function imgui.OnDrawFrame()
 				cmd_donaters()
 			end
 			imgui.SameLine()
-			if HotKey("##1", ActiveDonaters, tLastKeys, toScreenX(25)) then
+			if NewHotKey("##1", ActiveDonaters, tLastKeys, toScreenX(25)) then
 				rkeys.changeHotKey(bindDonaters, ActiveDonaters.v)
-
 				ini9['HotKey'].bindDonaters = encodeJson(ActiveDonaters.v)
 				inicfg.save(ini9, directIni9)
 			end
@@ -1200,7 +1199,7 @@ function imgui.OnDrawFrame()
 				cmd_topDonaters()
 			end
 			imgui.SameLine()
-			if HotKey("##2", ActiveTopDonaters, tLastKeys, toScreenX(25)) then
+			if NewHotKey("##2", ActiveTopDonaters, tLastKeys, toScreenX(25)) then
 				rkeys.changeHotKey(bindTopDonaters, ActiveTopDonaters.v)
 
 				ini9['HotKey'].bindTopDonaters = encodeJson(ActiveTopDonaters.v)
@@ -1211,7 +1210,7 @@ function imgui.OnDrawFrame()
 				cmd_topDonatersZiel()
 			end
 			imgui.SameLine()
-			if HotKey("##3", ActiveTopDonatersZiel, tLastKeys, toScreenX(25)) then
+			if NewHotKey("##3", ActiveTopDonatersZiel, tLastKeys, toScreenX(25)) then
 				rkeys.changeHotKey(bindTopDonatersZiel, ActiveTopDonatersZiel.v)
 
 				ini9['HotKey'].bindTopDonatersZiel = encodeJson(ActiveTopDonatersZiel.v)
@@ -1221,7 +1220,7 @@ function imgui.OnDrawFrame()
 				cmd_todayDonateMoney()
 			end
 			imgui.SameLine()
-			if HotKey("##4", ActiveTodayDonateMoney, tLastKeys, toScreenX(25)) then
+			if NewHotKey("##4", ActiveTodayDonateMoney, tLastKeys, toScreenX(25)) then
 				rkeys.changeHotKey(bindTodayDonateMoney, ActiveTodayDonateMoney.v)
 
 				ini9['HotKey'].bindTodayDonateMoney = encodeJson(ActiveTodayDonateMoney.v)
@@ -1232,7 +1231,7 @@ function imgui.OnDrawFrame()
 				cmd_DonateMoney()
 			end
 			imgui.SameLine()
-			if HotKey("##5", ActiveDonateMoney, tLastKeys, toScreenX(25)) then
+			if NewHotKey("##5", ActiveDonateMoney, tLastKeys, toScreenX(25)) then
 				rkeys.changeHotKey(bindDonateMoney, ActiveDonateMoney.v)
 
 				ini9['HotKey'].bindDonateMoney = encodeJson(ActiveDonateMoney.v)
@@ -1243,7 +1242,7 @@ function imgui.OnDrawFrame()
 				cmd_DonateMoneyZiel()
 			end
 			imgui.SameLine()
-			if HotKey("##6", ActiveDonateMoneyZiel, tLastKeys, toScreenX(25)) then
+			if NewHotKey("##6", ActiveDonateMoneyZiel, tLastKeys, toScreenX(25)) then
 				rkeys.changeHotKey(bindDonateMoneyZiel, ActiveDonateMoneyZiel.v)
 
 				ini9['HotKey'].bindDonateMoneyZiel = encodeJson(ActiveDonateMoneyZiel.v)
@@ -1330,7 +1329,7 @@ function imgui.OnDrawFrame()
 				cmd_hud()
 			end
 			imgui.SameLine()
-			if HotKey("##7", ActiveHud, tLastKeys, toScreenX(116)) then
+			if NewHotKey("##7", ActiveHud, tLastKeys, toScreenX(116)) then
 				rkeys.changeHotKey(bindHud, ActiveHud.v)
 
 				ini9['HotKey'].bindHud = encodeJson(ActiveHud.v)
@@ -2395,7 +2394,6 @@ function BufferingBar(value, size_arg, circle)
         DrawList:AddRectFilled(pos, imgui.ImVec2(pos.x + circleStart, pos.y + size.y), imgui.GetColorU32(imgui.GetStyle().Colors[imgui.Col.Button]))
         DrawList:AddRectFilled(pos, imgui.ImVec2(pos.x + circleStart * value, pos.y + size.y), imgui.GetColorU32(imgui.GetStyle().Colors[imgui.Col.ButtonHovered]))
     end
-    
 
     return true
 end
@@ -2414,7 +2412,14 @@ local tHotKeyData = {
 }
 local tKeys = {}
 
-function HotKey(name, keys, lastkeys, width)
+local wm = require 'lib.windows.message'
+
+local xz = {}
+xz._SETTINGS = {
+    noKeysMessage = "No"
+}
+
+function NewHotKey(name, keys, lastkeys, width)
     local width = width or 90
     local name = tostring(name)
     local lastkeys = lastkeys or {}
@@ -2425,7 +2430,7 @@ function HotKey(name, keys, lastkeys, width)
 
     if #tHotKeyData.save > 0 and tostring(tHotKeyData.save[1]) == name then
         keys.v = tHotKeyData.save[2]
-        sKeys = table.concat(module.getKeysName(keys.v), " + ")
+        sKeys = table.concat(getKeysName(keys.v), " + ")
         tHotKeyData.save = {}
         bool = true
     elseif tHotKeyData.edit ~= nil and tostring(tHotKeyData.edit) == name then
@@ -2434,7 +2439,7 @@ function HotKey(name, keys, lastkeys, width)
             tHotKeyData.lastTick = os.clock()
             tHotKeyData.tickState = not tHotKeyData.tickState
          end
-         sKeys = tHotKeyData.tickState and module._SETTINGS.noKeysMessage or " "
+         sKeys = tHotKeyData.tickState and xz._SETTINGS.noKeysMessage or " "
         else
             sKeys = table.concat(getKeysName(tKeys), " + ")
         end
@@ -2443,21 +2448,108 @@ function HotKey(name, keys, lastkeys, width)
     imgui.PushStyleColor(imgui.Col.Button, imgui.GetStyle().Colors[imgui.Col.FrameBg])
     imgui.PushStyleColor(imgui.Col.ButtonHovered, imgui.GetStyle().Colors[imgui.Col.FrameBgHovered])
     imgui.PushStyleColor(imgui.Col.ButtonActive, imgui.GetStyle().Colors[imgui.Col.FrameBgActive])
-    if imgui.Button((tostring(sKeys):len() == 0 and module._SETTINGS.noKeysMessage or sKeys) .. name, imgui.ImVec2(width, 0)) then
+    if imgui.Button((tostring(sKeys):len() == 0 and xz._SETTINGS.noKeysMessage or sKeys) .. name, imgui.ImVec2(width, 0)) then
         tHotKeyData.edit = name
     end
     imgui.PopStyleColor(3)
     return bool
 end
 
-function getKeysName(keys)
-	if type(keys) ~= "table" then
-		return false
-	else
-		local tKeysName = {}
-		for k, v in ipairs(keys) do
-			tKeysName[k] = vkeys.id_to_name(v)
-		end
-		return tKeysName
-	end
+function getCurrentEdit()
+    return tHotKeyData.edit ~= nil
 end
+
+function getKeysList(bool)
+   local bool = bool or false
+   local tKeysList = {}
+   if bool then
+      for k, v in ipairs(tKeys) do
+         tKeysList[k] = vkeys.id_to_name(v)
+      end
+   else
+      tKeysList = tKeys
+   end
+   return tKeysList
+end
+
+function getKeysName(keys)
+    if type(keys) ~= "table" then
+       return false
+    else
+       local tKeysName = {}
+       for k, v in ipairs(keys) do
+          tKeysName[k] = vkeys.id_to_name(v)
+       end
+       return tKeysName
+    end
+ end
+
+local function getKeyNumber(id)
+   for k, v in ipairs(tKeys) do
+      if v == id then
+         return k
+      end
+   end
+   return -1
+end
+
+local function reloadKeysList()
+    local tNewKeys = {}
+    for k, v in pairs(tKeys) do
+       tNewKeys[#tNewKeys + 1] = v
+    end
+    tKeys = tNewKeys
+    return true
+ end
+
+function isKeyModified(id)
+if type(id) ~= "number" then
+   return false
+end
+return (tModKeys[id] or false) or (tBlockKeys[id] or false)
+end
+
+addEventHandler("onWindowMessage", function (msg, wparam, lparam)
+    if tHotKeyData.edit ~= nil and msg == wm.WM_CHAR then
+        if tBlockChar[wparam] then
+            consumeWindowMessage(true, true)
+        end
+    end
+    if msg == wm.WM_KEYDOWN or msg == wm.WM_SYSKEYDOWN then
+        if tHotKeyData.edit ~= nil and wparam == vkeys.VK_ESCAPE then
+            tKeys = {}
+            tHotKeyData.edit = nil
+            consumeWindowMessage(true, true)
+        end
+        if tHotKeyData.edit ~= nil and wparam == vkeys.VK_BACK then
+            tHotKeyData.save = {tHotKeyData.edit, {}}
+            tHotKeyData.edit = nil
+            consumeWindowMessage(true, true)
+        end
+        local num = getKeyNumber(wparam)
+        if num == -1 then
+            tKeys[#tKeys + 1] = wparam
+            if tHotKeyData.edit ~= nil then
+                if not isKeyModified(wparam) then
+                    tHotKeyData.save = {tHotKeyData.edit, tKeys}
+                    tHotKeyData.edit = nil
+                    tKeys = {}
+                    consumeWindowMessage(true, true)
+                end
+            end
+        end
+        reloadKeysList()
+        if tHotKeyData.edit ~= nil then
+            consumeWindowMessage(true, true)
+        end
+    elseif msg == wm.WM_KEYUP or msg == wm.WM_SYSKEYUP then
+        local num = getKeyNumber(wparam)
+        if num > -1 then
+            tKeys[num] = nil
+        end
+        reloadKeysList()
+        if tHotKeyData.edit ~= nil then
+            consumeWindowMessage(true, true)
+        end
+    end
+end)
