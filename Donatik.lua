@@ -1,45 +1,63 @@
 script_name("Donatik")
 script_author("bier")
-script_version("03.03.2022")
+script_version("09.02.2022")
 script_version_number(14)
 script_url("https://vlaek.github.io/Donatik/")
 script.update = false
 
-require "reload_all"
-require "lib.sampfuncs"
-require "lib.moonloader"
+local main_color = 0xFFFF00
+local prefix = "{FFFF00} [" .. thisScript().name .. "] {FFFFFF}"
 
-local sampev, inicfg, imgui, encoding, vkeys, rkeys = require 'lib.samp.events', require 'inicfg', require 'imgui', require 'encoding', require "vkeys", require 'rkeys'
-local as_action, themes = require 'moonloader'.audiostream_state, import "imgui_themes.lua"
+function try(f, catch_f)
+	local status, exception = pcall(f)
+	if not status then
+		catch_f(exception)
+	end
+end
 
-encoding.default = 'CP1251'
-local u8 = encoding.UTF8
+try(function()
+	sampev, inicfg, imgui, encoding, vkeys, rkeys =
+	require "lib.samp.events",
+	require "inicfg",
+	require 'imgui',
+	require 'encoding',
+	require "vkeys",
+	require 'rkeys'
+
+	require "reload_all"
+	require "lib.sampfuncs"
+	require "lib.moonloader"
+	
+	as_action, themes = 
+	require 'moonloader'.audiostream_state, 
+	import "imgui_themes.lua"
+	
+	encoding.default = 'CP1251'
+	u8 = encoding.UTF8
+
+	end, function(e)
+	sampAddChatMessage(prefix .. "An error occurred while loading libraries", main_color)
+	thisScript():unload()
+end)
 
 local ini1, ini2, ini3, ini4, ini5, ini6, ini7, ini8, ini9, ini10, ini11, ini12 = {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
 local tLastKeys = {}
-
+local tab = imgui.ImInt(1)
 local main_window_state, help_window_state, diagram_window_state = imgui.ImBool(false), imgui.ImBool(false), imgui.ImBool(false)
 local text_buffer_target, text_buffer_name, text_buffer_nick, text_buffer_summa = imgui.ImBuffer(256), imgui.ImBuffer(256), imgui.ImBuffer(256), imgui.ImBuffer(256)
 local buffering_bar_position = true
 local donaters_list_silder = imgui.ImInt(1)
 local donaters_list = true
 
-local main_color = 0xFFFF00
-local prefix = "{FFFF00} [" .. thisScript().name .. "] {FFFFFF}"
-local percent = 0
-
 function main()
-	if not isSampLoaded() or not isSampfuncsLoaded() then
-        return
-    end
-
-    while not isSampAvailable() do
-        wait(100)
-    end
-
-    repeat
-        wait(100)
-    until sampGetCurrentServerName() ~= "SA-MP"
+    if not isSampLoaded() or not isSampfuncsLoaded() then return end
+    while not isSampAvailable() do wait(0) end
+    repeat wait(0) until sampGetCurrentServerName() ~= "SA-MP"
+    repeat wait(0) until sampGetCurrentServerName():find("Samp%-Rp.Ru") or sampGetCurrentServerName():find("SRP")
+	
+	server = sampGetCurrentServerName():gsub('|', '')
+	server = (server:find('02') and 'Two' or (server:find('Revolution') and 'Revolution' or (server:find('Legacy') and 'Legacy' or (server:find('Classic') and 'Classic' or ''))))
+	if server == '' then thisScript():unload() end
 	
 	local _, my_id = sampGetPlayerIdByCharHandle(PLAYER_PED)
 	my_name = sampGetPlayerNickname(my_id)
@@ -47,10 +65,6 @@ function main()
 	my_day   = os.date("%d")
 	my_month = os.date("%m")
 	my_year  = os.date("%Y")
-	
-	server = sampGetCurrentServerName():gsub('|', '')
-	server = (server:find('02') and 'Two' or (server:find('Revolution') and 'Revolution' or (server:find('Legacy') and 'Legacy' or (server:find('Classic') and 'Classic' or ''))))
-	if server == '' then thisScript():unload() end
 
 	AdressConfig = string.format("%s\\moonloader\\config" , getGameDirectory())
 	AdressFolder = string.format("%s\\moonloader\\config\\Donatik\\%s\\%s", getGameDirectory(), server, my_name)
@@ -338,9 +352,10 @@ function main()
 	soundManager.loadSound("1k")      -- WKOLNIK
 	soundManager.loadSound("100")     -- PAPICH
 	soundManager.loadSound("0")       -- PAPICH
-	soundManager.loadSound("percent") -- 
 	
 	checkUpdates()
+	
+	percent = (tonumber(ini8[DonateMoneyZiel].money)/tonumber(ini8[DonateMoneyZiel].target))
 	
 	sampAddChatMessage(prefix .. u8:decode"Успешно загрузился!", main_color)
 	
@@ -351,8 +366,6 @@ function main()
 	while true do
 		wait(0)
 		imgui.ShowCursor = false
-		
-		percent = (tonumber(ini8[DonateMoneyZiel].money)/tonumber(ini8[DonateMoneyZiel].target))
 		
 		if isKeyJustPressed(VK_ESCAPE) and main_window_state.v then
 			main_window_state.v = false
@@ -877,6 +890,8 @@ function sampev.onServerMessage(color, text)
 			
 			restartTextLabelOverPlayerNickname()
 			
+			percent = (tonumber(ini8[DonateMoneyZiel].money)/tonumber(ini8[DonateMoneyZiel].target))
+			
 			return false 
 		end
 	end
@@ -1119,6 +1134,8 @@ function sampev.onSendCommand(cmd)
 				
 				restartTextLabelOverPlayerNickname()
 				
+				percent = (tonumber(ini8[DonateMoneyZiel].money)/tonumber(ini8[DonateMoneyZiel].target))
+				
 			else
 				sampAddChatMessage(prefix .. u8:decode"Ошибка.", main_color)
 			end
@@ -1156,33 +1173,15 @@ function imgui.OnDrawFrame()
 	if main_window_state.v then
 		imgui.ShowCursor = true
 		imgui.SetNextWindowPos(vec(137, 125), 2)
-		imgui.SetNextWindowSize(vec(365, 243))
+		imgui.SetNextWindowSize(vec(437, 230))
 		imgui.Begin("Donatik " .. thisScript().version, main_window_state, imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoScrollbar)
 		
-		imgui.BeginChild('top', vec(309, 9), false)
-			if imgui.Selectable('\t\t\tФункции', imgui.settingsTab == 1, 0, vec(55, 9)) then
-				imgui.settingsTab = 1
-			end
-			imgui.SameLine()
-			if imgui.Selectable('\t\tИнформация', imgui.settingsTab == 2, 0, vec(55, 9)) then
-				imgui.settingsTab = 2
-			end
-			imgui.SameLine()
-			if imgui.Selectable('\t\tСписок донатеров', imgui.settingsTab == 3, 0, vec(70, 9)) then
-				imgui.settingsTab = 3
-			end
-			imgui.SameLine()
-			if imgui.Selectable('\tСписок донатеров цель', imgui.settingsTab == 4, 0, vec(70, 9)) then
-				imgui.settingsTab = 4
-			end
-			imgui.SameLine()
-			if imgui.Selectable('\t\tСвоя тема', imgui.settingsTab == 5, 0, vec(60, 9)) then
-				imgui.settingsTab = 5
-			end
+		imgui.BeginChild('top', vec(70, 213), true)
+			imgui.CustomMenu({'Функции', 'Список донатеров', 'Список донатеров цель', 'История донатов', 'Информация', 'Своя тема'}, tab, vec(65, 20), _, true)
 		imgui.EndChild()
-		
+		imgui.SameLine()
 		imgui.BeginChild('bottom', vec(358.5, 213), true)
-		if imgui.settingsTab == 1 then
+		if tab.v == 1 then
 			if imgui.Button("Топ донатеры за день", vec(133.5/1.5, 10)) then
 				cmd_donaters()
 			end
@@ -1565,32 +1564,93 @@ function imgui.OnDrawFrame()
 				ini9[settings].textLabel = not ini9[settings].textLabel
 				inicfg.save(ini9, directIni9)
 			end
-		elseif imgui.settingsTab == 2 then
-			if script.update then
-				if imgui.Button("Обновить скрипт", vec(174, 0)) then
-					imgui.Process = false
-					updateScript()
+		elseif tab.v == 2 then
+			imgui.Columns(1, "Title23", true)
+			imgui.Text("Список донатеров за все время: ".. ConvertNumber(ini1[DonateMoney].money) .. " вирт от " .. ConvertNumber(ini11["Count"].count) .. " игроков")
+			imgui.Separator()
+			imgui.Columns(3, "Columns", true)
+			imgui.Text("Место")
+			imgui.NextColumn()
+			imgui.Text("Имя")
+			imgui.NextColumn()
+			imgui.Text("Денег")
+			imgui.NextColumn()
+			for i = 1, tonumber(ini11[PlayerCount].count) do
+				if ini11[i] ~= nil then
+					imgui.Separator()
+					imgui.Text("" .. i)
+					imgui.NextColumn()
+					imgui.Text(u8(ini11[i].nick))
+					imgui.NextColumn()
+					imgui.Text("" .. ConvertNumber(ini11[i].money))
+					imgui.NextColumn()
+				end
+			end
+		elseif tab.v == 3 then
+			imgui.Columns(1, "Title23", true)
+			imgui.Text("На цель \"" .. ini1[DonateMoney].zielName .. "\" за все время: ".. ConvertNumber(ini8[DonateMoneyZiel].money) .. " вирт от " .. ConvertNumber(ini12["Count"].count) .. " игроков")
+			imgui.Separator()
+			imgui.Columns(3, "Columns", true)
+			imgui.Text("Место")
+			imgui.NextColumn()
+			imgui.Text("Имя")
+			imgui.NextColumn()
+			imgui.Text("Денег")
+			imgui.NextColumn()
+			for i = 1, tonumber(ini12[PlayerCount].count) do
+				if ini12[i] ~= nil then
+					imgui.Separator()
+					imgui.Text("" .. i)
+					imgui.NextColumn()
+					imgui.Text(u8(ini12[i].nick))
+					imgui.NextColumn()
+					imgui.Text("" .. ConvertNumber(ini12[i].money))
+					imgui.NextColumn()
+				end
+			end
+		elseif tab.v == 4 then
+			imgui.Text(" История донатов:")
+			imgui.SameLine()
+			imgui.SetCursorPosX(toScreenX(180))
+			
+			if donaters_list then
+				if imgui.Button("Все", vec(20, 0)) then
+					donaters_list = not donaters_list
 				end
 			else
-				if imgui.Button("Актуальная версия скрипта", vec(174, 0)) then
-					sampAddChatMessage(prefix .. "Обновление не требуется", main_color)
+				if imgui.Button("Цель", vec(20, 0)) then
+					donaters_list = not donaters_list
 				end
 			end
-			imgui.SameLine()
-			imgui.Text(" История донатов:")
 			
-			if imgui.Button("Команды", vec(170/3, 0)) then
-				help_window_state.v = not help_window_state.v
+			local donatersCount = 0
+			for i = 0, 1000 do
+				if sampIsPlayerConnected(i) then
+					donaterNick = sampGetPlayerNickname(i)
+					if donaters_list then
+						if ini5[donaterNick] ~= nil then
+							if donaterNick == ini5[donaterNick].nick and ini5[donaterNick].money >= donaters_list_silder.v then
+								donatersCount = donatersCount + 1
+							end
+						end
+					else
+						if ini7[donaterNick] ~= nil then
+							if donaterNick == ini7[donaterNick].nick and ini7[donaterNick].money >= donaters_list_silder.v then
+								donatersCount = donatersCount + 1
+							end
+						end
+
+					end
+				end
 			end
+			
 			imgui.SameLine()
-			if imgui.Button("Перезагрузить", vec(170/3, 0)) then 
-				thisScript():reload()
-			end
+			imgui.PushItemWidth(toScreenX(90))
+			if imgui.SliderInt("##inp7", donaters_list_silder, 1, 100000) then end
+			imgui.PopItemWidth()
 			imgui.SameLine()
-			if imgui.Button("График", vec(170/3, 0)) then 
-				diagram_window_state.v = not diagram_window_state.v
-			end
-			imgui.SameLine()
+			imgui.Text(" Донатеры онлайн " .. donatersCount .. "	")
+			
 			imgui.BeginChild('History', vec(175, 190), true)
 				for y = 2020, 2038 do
 					for m = 0, 12 do
@@ -1646,102 +1706,10 @@ function imgui.OnDrawFrame()
 					end
 				end
 			imgui.EndChild()
-			imgui.SetCursorPos(vec(3, 26.7))
-			if ini9[settings].Switch then
-				if imgui.Button("Прекратить работу скрипта", vec(174, 0)) then
-					ini9[settings].Switch = not ini9[settings].Switch
-				end
-			else
-				if imgui.Button("Включить скрипт", vec(174, 0)) then
-					ini9[settings].Switch = not ini9[settings].Switch
-				end
-			end
-			if imgui.IsItemHovered() then
-				imgui.BeginTooltip()
-				imgui.PushTextWrapPos(toScreenX(100))
-				imgui.TextUnformatted("Если выключить, то запись донатов прекратится")
-				imgui.PopTextWrapPos()
-				imgui.EndTooltip()
-			end
-			imgui.Text(" Для связи использовать:")
-			imgui.SameLine()
-			if imgui.Button("VK", vec(20, 0)) then
-				os.execute("start https://vk.com/vlaeek")
-			end
-			imgui.SameLine()
-			if imgui.Button("GitHub", vec(20, 0)) then
-				os.execute("start https://vlaek.github.io/Donatik/")
-			end
-			local found = false
-			imgui.SameLine()
-			for i = 0, 1000 do 
-				if sampIsPlayerConnected(i) and sampGetPlayerScore(i) ~= 0 then
-					if sampGetPlayerNickname(i) == "bier" then
-						if imgui.Button("bier [" .. i .. "] сейчас в сети", vec(65, 0)) then
-							sampSendChat("/sms " .. i .. u8:decode" Привет, мой хороший")
-						end
-						if imgui.IsItemHovered() then
-							imgui.BeginTooltip()
-							imgui.PushTextWrapPos(toScreenX(100))
-							imgui.TextUnformatted("Да да я")
-							imgui.PopTextWrapPos()
-							imgui.EndTooltip()
-						end
-						found = true
-					end
-				end
-			end
-			if not found then
-				if imgui.Button("bier сейчас не в сети", vec(65, 0)) then
-					sampAddChatMessage(prefix .. u8:decode"bier играет на Revolution (сейчас не онлайн)", main_color)
-				end
-				if imgui.IsItemHovered() then
-					imgui.BeginTooltip()
-					imgui.PushTextWrapPos(toScreenX(100))
-					imgui.TextUnformatted("Да да я")
-					imgui.PopTextWrapPos()
-					imgui.EndTooltip()
-				end
-			end
 			
-			local donatersCount = 0
-			for i = 0, 1000 do
-				if sampIsPlayerConnected(i) then
-					donaterNick = sampGetPlayerNickname(i)
-					if donaters_list then
-						if ini5[donaterNick] ~= nil then
-							if donaterNick == ini5[donaterNick].nick and ini5[donaterNick].money >= donaters_list_silder.v then
-								donatersCount = donatersCount + 1
-							end
-						end
-					else
-						if ini7[donaterNick] ~= nil then
-							if donaterNick == ini7[donaterNick].nick and ini7[donaterNick].money >= donaters_list_silder.v then
-								donatersCount = donatersCount + 1
-							end
-						end
-
-					end
-				end
-			end
-			imgui.Text(" ")
-			if donaters_list then
-				if imgui.Button("Все", vec(20, 0)) then
-					donaters_list = not donaters_list
-				end
-			else
-				if imgui.Button("Цель", vec(20, 0)) then
-					donaters_list = not donaters_list
-				end
-			end
 			imgui.SameLine()
-			imgui.PushItemWidth(toScreenX(90))
-			if imgui.SliderInt("##inp7", donaters_list_silder, 1, 100000) then end
-			imgui.PopItemWidth()
-			imgui.SameLine()
-			imgui.Text(" Донатеры онлайн " .. donatersCount .. "	")
 			
-			imgui.BeginChild('DonatersOnline', vec(175, 135), true)
+			imgui.BeginChild('DonatersOnline', vec(175, 190), true)
 				for i = 0, 1000 do
 					if sampIsPlayerConnected(i) then
 						donaterNick = sampGetPlayerNickname(i)
@@ -1805,51 +1773,101 @@ function imgui.OnDrawFrame()
 					end
 				end
 			imgui.EndChild() 
-		elseif imgui.settingsTab == 3 then
-			imgui.Columns(1, "Title23", true)
-			imgui.Text("Список донатеров за все время: ".. ConvertNumber(ini1[DonateMoney].money) .. " вирт от " .. ConvertNumber(ini11["Count"].count) .. " игроков")
-			imgui.Separator()
-			imgui.Columns(3, "Columns", true)
-			imgui.Text("Место")
-			imgui.NextColumn()
-			imgui.Text("Имя")
-			imgui.NextColumn()
-			imgui.Text("Денег")
-			imgui.NextColumn()
-			for i = 1, tonumber(ini11[PlayerCount].count) do
-				if ini11[i] ~= nil then
-					imgui.Separator()
-					imgui.Text("" .. i)
-					imgui.NextColumn()
-					imgui.Text(u8(ini11[i].nick))
-					imgui.NextColumn()
-					imgui.Text("" .. ConvertNumber(ini11[i].money))
-					imgui.NextColumn()
+			
+		elseif tab.v == 5 then
+			if script.update then
+				if imgui.Button("Обновить скрипт", vec(175, 20)) then
+					imgui.Process = false
+					updateScript()
+				end
+			else
+				if imgui.Button("Актуальная версия скрипта", vec(175, 20)) then
+					sampAddChatMessage(prefix .. "Обновление не требуется", main_color)
 				end
 			end
-		elseif imgui.settingsTab == 4 then
-			imgui.Columns(1, "Title23", true)
-			imgui.Text("На цель \"" .. ini1[DonateMoney].zielName .. "\" за все время: ".. ConvertNumber(ini8[DonateMoneyZiel].money) .. " вирт от " .. ConvertNumber(ini12["Count"].count) .. " игроков")
-			imgui.Separator()
-			imgui.Columns(3, "Columns", true)
-			imgui.Text("Место")
-			imgui.NextColumn()
-			imgui.Text("Имя")
-			imgui.NextColumn()
-			imgui.Text("Денег")
-			imgui.NextColumn()
-			for i = 1, tonumber(ini12[PlayerCount].count) do
-				if ini12[i] ~= nil then
-					imgui.Separator()
-					imgui.Text("" .. i)
-					imgui.NextColumn()
-					imgui.Text(u8(ini12[i].nick))
-					imgui.NextColumn()
-					imgui.Text("" .. ConvertNumber(ini12[i].money))
-					imgui.NextColumn()
+			imgui.SameLine()
+			if imgui.Button("Перезагрузить", vec(175, 20)) then 
+				thisScript():reload()
+			end
+			if imgui.Button("График", vec(175, 20)) then 
+				diagram_window_state.v = not diagram_window_state.v
+			end
+			imgui.SameLine()
+			if ini9[settings].Switch then
+				if imgui.Button("Прекратить работу скрипта", vec(175, 20)) then
+					ini9[settings].Switch = not ini9[settings].Switch
+				end
+			else
+				if imgui.Button("Включить скрипт", vec(175, 20)) then
+					ini9[settings].Switch = not ini9[settings].Switch
 				end
 			end
-		elseif imgui.settingsTab == 5 then
+			if imgui.IsItemHovered() then
+				imgui.BeginTooltip()
+				imgui.PushTextWrapPos(toScreenX(100))
+				imgui.TextUnformatted("Если выключить, то запись донатов прекратится")
+				imgui.PopTextWrapPos()
+				imgui.EndTooltip()
+			end
+			if imgui.Button("VK", vec(86.5, 20)) then
+				os.execute("start https://vk.com/vlaeek")
+			end
+			imgui.SameLine()
+			if imgui.Button("GitHub", vec(86.5, 20)) then
+				os.execute("start https://vlaek.github.io/Donatik/")
+			end
+			local found = false
+			imgui.SameLine()
+			for i = 0, 1000 do 
+				if sampIsPlayerConnected(i) and sampGetPlayerScore(i) ~= 0 then
+					if sampGetPlayerNickname(i) == "bier" then
+						if imgui.Button("bier [" .. i .. "] сейчас в сети", vec(175, 20)) then
+							sampSendChat("/sms " .. i .. u8:decode" Привет, мой хороший")
+						end
+						if imgui.IsItemHovered() then
+							imgui.BeginTooltip()
+							imgui.PushTextWrapPos(toScreenX(100))
+							imgui.TextUnformatted("Да да я")
+							imgui.PopTextWrapPos()
+							imgui.EndTooltip()
+						end
+						found = true
+					end
+				end
+			end
+			if not found then
+				if imgui.Button("bier сейчас не в сети", vec(175, 20)) then
+					sampAddChatMessage(prefix .. u8:decode"bier играет на Revolution (сейчас не онлайн)", main_color)
+				end
+				if imgui.IsItemHovered() then
+					imgui.BeginTooltip()
+					imgui.PushTextWrapPos(toScreenX(100))
+					imgui.TextUnformatted("Да да я")
+					imgui.PopTextWrapPos()
+					imgui.EndTooltip()
+				end
+			end
+			
+			imgui.Separator()
+			
+			imgui.TextColoredRGB(u8:decode"  {40E0D0}/dhud {FFFFFF}- включить главное меню скрипта")
+			imgui.TextColoredRGB(u8:decode"  {40E0D0}/dhudik {FFFFFF}- включить Donatik HUD")
+			imgui.TextColoredRGB(u8:decode"  {40E0D0}/donater [Ник игрока] [Количество денег] {FFFFFF}- добавить донатера")
+			imgui.TextColoredRGB(u8:decode"  {40E0D0}/donater [Ник игрока] {FFFFFF}- вывести информацию о игроке (только себе)")
+			imgui.TextColoredRGB(u8:decode"  {40E0D0}/dziel [Название цели] [Количество денег] {FFFFFF}- установить цель сбора")
+			imgui.TextColoredRGB(u8:decode"  {40E0D0}/donaters {FFFFFF}- вывести список донатеров за сегодня")
+			imgui.TextColoredRGB(u8:decode"  {40E0D0}/topdonaters {FFFFFF}- вывести список топ донатеров за все время")
+			imgui.TextColoredRGB(u8:decode"  {40E0D0}/topdonatersZiel {FFFFFF}- вывести топ донатеров за все время для цели")
+			imgui.TextColoredRGB(u8:decode"  {40E0D0}/todaydonateMoney {FFFFFF}- вывести накопленные деньги за сегодня")
+			imgui.TextColoredRGB(u8:decode"  {40E0D0}/donatemoney {FFFFFF}- вывести накопленные деньги за все время")
+			imgui.TextColoredRGB(u8:decode"  {40E0D0}/donatemoneyziel {FFFFFF}- вывести накопленные деньги для текущей цели")
+			imgui.TextColoredRGB(u8:decode"  {40E0D0}/donatername [Ник игрока] {FFFFFF}- вывести в общий чат информацию о игроке")
+			imgui.TextColoredRGB(u8:decode"  {40E0D0}/donaterid [id игрока] {FFFFFF}- вывести в общий чат информацию о игроке")
+			imgui.TextColoredRGB(u8:decode"  {40E0D0}/dtop [N] {FFFFFF}- вывести в общий чат N-список донатеров")
+			imgui.TextColoredRGB(u8:decode"  {40E0D0}/dtopZiel [N] {FFFFFF}- вывести в общий чат N-список донатеров для текущей цели")
+			
+
+		elseif tab.v == 6 then
 			if imgui.ColorEdit4("Text", color_text) then 
 				rgba = imgui.ImColor(color_text.v[1], color_text.v[2], color_text.v[3], color_text.v[4])
 				ini9[MyStyle].Text_R, ini9[MyStyle].Text_G, ini9[MyStyle].Text_B, ini9[MyStyle].Text_A = rgba:GetRGBA()
@@ -1905,7 +1923,7 @@ function imgui.OnDrawFrame()
 				updateMyStyle()
 			end
 			imgui.Separator()
-			if imgui.Button("Вернуть значения по умолчанию") then
+			if imgui.Button("Вернуть значения по умолчанию", vec(352, 20)) then
 				ini9[MyStyle].Text_R           = 1.00
 				ini9[MyStyle].Text_G           = 1.00
 				ini9[MyStyle].Text_B           = 1.00
@@ -2082,6 +2100,50 @@ function imgui.initBuffers()
 	color_separator     = imgui.ImFloat4(ini9[MyStyle].Separator_R, ini9[MyStyle].Separator_G, ini9[MyStyle].Separator_B, ini9[MyStyle].Separator_A)
 	color_windowbg      = imgui.ImFloat4(ini9[MyStyle].WindowBg_R, ini9[MyStyle].WindowBg_G, ini9[MyStyle].WindowBg_B, ini9[MyStyle].WindowBg_A)
 	color_checkmark     = imgui.ImFloat4(ini9[MyStyle].CheckMark_R, ini9[MyStyle].CheckMark_G, ini9[MyStyle].CheckMark_B, ini9[MyStyle].CheckMark_A)
+end
+
+function imgui.CustomMenu(labels, selected, size, speed, centering)
+    local bool = false
+    speed = speed and speed or 0.2
+    local radius = size.y * 0.50
+    local draw_list = imgui.GetWindowDrawList()
+    if LastActiveTime == nil then LastActiveTime = {} end
+    if LastActive == nil then LastActive = {} end
+    local function ImSaturate(f)
+        return f < 0.0 and 0.0 or (f > 1.0 and 1.0 or f)
+    end
+    for i, v in ipairs(labels) do
+        local c = imgui.GetCursorPos()
+        local p = imgui.GetCursorScreenPos()
+        if imgui.InvisibleButton(v..'##'..i, size) then
+            selected.v = i
+            LastActiveTime[v] = os.clock()
+            LastActive[v] = true
+            bool = true
+        end
+        imgui.SetCursorPos(c)
+        local t = selected.v == i and 1.0 or 0.0
+        if LastActive[v] then
+            local time = os.clock() - LastActiveTime[v]
+            if time <= 0.3 then
+                local t_anim = ImSaturate(time / speed)
+                t = selected.v == i and t_anim or 1.0 - t_anim
+            else
+                LastActive[v] = false
+            end
+        end
+        local col_bg = imgui.GetColorU32(selected.v == i and imgui.GetStyle().Colors[imgui.Col.ButtonActive] or imgui.ImVec4(0,0,0,0))
+        local col_box = imgui.GetColorU32(selected.v == i and imgui.GetStyle().Colors[imgui.Col.Button] or imgui.ImVec4(0,0,0,0))
+        local col_hovered = imgui.GetStyle().Colors[imgui.Col.ButtonHovered]
+        local col_hovered = imgui.GetColorU32(imgui.ImVec4(col_hovered.x, col_hovered.y, col_hovered.z, (imgui.IsItemHovered() and 0.2 or 0)))
+        draw_list:AddRectFilled(imgui.ImVec2(p.x-size.x/6, p.y), imgui.ImVec2(p.x + (radius * 0.65) + t * size.x, p.y + size.y), col_bg, 10.0)
+        draw_list:AddRectFilled(imgui.ImVec2(p.x-size.x/6, p.y), imgui.ImVec2(p.x + (radius * 0.65) + size.x, p.y + size.y), col_hovered, 10.0)
+        draw_list:AddRectFilled(imgui.ImVec2(p.x, p.y), imgui.ImVec2(p.x+5, p.y + size.y), col_box)
+        imgui.SetCursorPos(imgui.ImVec2(c.x+(centering and (size.x-imgui.CalcTextSize(v).x)/2 or 15), c.y+(size.y-imgui.CalcTextSize(v).y)/2))
+        imgui.Text(v)
+        imgui.SetCursorPos(imgui.ImVec2(c.x, c.y+size.y))
+    end
+    return bool
 end
 
 function isNumber(n)
@@ -2333,7 +2395,7 @@ function onScriptTerminate(LuaScript, quitGame)
 				textlabel[i] = nil
 			end
 		end
-		
+		imgui.Process = false
 		sampAddChatMessage(prefix .. u8:decode"Скрипт завершил свою работу", main_color)
 	end
 end
@@ -2349,7 +2411,6 @@ function updateMyStyle()
 		ini9[MyStyle].CheckMark_R, ini9[MyStyle].CheckMark_G, ini9[MyStyle].CheckMark_B, ini9[MyStyle].CheckMark_A,
 		ini9[MyStyle].WindowBg_R, ini9[MyStyle].WindowBg_G, ini9[MyStyle].WindowBg_B, ini9[MyStyle].WindowBg_A)
 end
-
 
 -- BufferingBar:
 function BufferingBar(value, size_arg, circle)
