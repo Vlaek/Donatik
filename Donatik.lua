@@ -1,7 +1,7 @@
 script_name("Donatik")
 script_author("bier")
-script_version("08.02.2022")
-script_version_number(13)
+script_version("03.03.2022")
+script_version_number(14)
 script_url("https://vlaek.github.io/Donatik/")
 script.update = false
 
@@ -20,15 +20,13 @@ local tLastKeys = {}
 
 local main_window_state, help_window_state, diagram_window_state = imgui.ImBool(false), imgui.ImBool(false), imgui.ImBool(false)
 local text_buffer_target, text_buffer_name, text_buffer_nick, text_buffer_summa = imgui.ImBuffer(256), imgui.ImBuffer(256), imgui.ImBuffer(256), imgui.ImBuffer(256)
-local InterfacePosition = true
-local slider = imgui.ImInt(1)
-local switch = true
+local buffering_bar_position = true
+local donaters_list_silder = imgui.ImInt(1)
+local donaters_list = true
 
 local main_color = 0xFFFF00
 local prefix = "{FFFF00} [" .. thisScript().name .. "] {FFFFFF}"
 local percent = 0
-
-local topDonatersCount, topDonatersZielCount = 3, 3
 
 function main()
 	if not isSampLoaded() or not isSampfuncsLoaded() then
@@ -541,7 +539,7 @@ end
 
 function cmd_topDonaters()
 	chatManager.addMessageToQueue("Список пожертвований от уважаемых людей за все время: ", false)
-	for i = 1, topDonatersCount do
+	for i = 1, 3 do
 		ini11 = inicfg.load(i, directIni11)
 		if ini11[i] ~= nil then
 			chatManager.addMessageToQueue(i .. ". Господин " .. ini11[i].nick .. " с суммой " .. ConvertNumber(ini11[i].money) .. " вирт", false)
@@ -554,7 +552,7 @@ end
 
 function cmd_topDonatersZiel()
 	chatManager.addMessageToQueue("Список пожертвований от уважаемых людей на \"" .. ini1[DonateMoney].zielName .. "\" за все время", false)
-	for i = 1, topDonatersZielCount do
+	for i = 1, 3 do
 		ini12 = inicfg.load(i, directIni12)
 		if ini12[i] ~= nil then
 			chatManager.addMessageToQueue(i .. ". Господин " .. ini12[i].nick .. " с суммой " .. ConvertNumber(ini12[i].money) .. " вирт", false)
@@ -1141,7 +1139,7 @@ end
 
 function imgui.OnDrawFrame()
 	if ini1[DonateMoney].hud then
-		if InterfacePosition == true then
+		if buffering_bar_position == true then
 			imgui.SetNextWindowPos(imgui.ImVec2(ini9[settings].x, ini9[settings].y))
 			inicfg.save(ini9, directIni9)
 		end
@@ -1313,14 +1311,14 @@ function imgui.OnDrawFrame()
 				imgui.PopTextWrapPos()
 				imgui.EndTooltip()
 			end
-			if InterfacePosition then
+			if buffering_bar_position then
 				if imgui.Button("Фиксация HUDa", vec(116, 10)) then
-					InterfacePosition = not InterfacePosition
+					buffering_bar_position = not buffering_bar_position
 					inicfg.save(ini9, directIni9)
 				end
 			else
 				if imgui.Button("Зафиксировать HUD", vec(116, 10)) then
-					InterfacePosition = not InterfacePosition
+					buffering_bar_position = not buffering_bar_position
 					inicfg.save(ini9, directIni9)
 				end
 			end
@@ -1710,15 +1708,15 @@ function imgui.OnDrawFrame()
 			for i = 0, 1000 do
 				if sampIsPlayerConnected(i) then
 					donaterNick = sampGetPlayerNickname(i)
-					if switch then
+					if donaters_list then
 						if ini5[donaterNick] ~= nil then
-							if donaterNick == ini5[donaterNick].nick and ini5[donaterNick].money >= slider.v then
+							if donaterNick == ini5[donaterNick].nick and ini5[donaterNick].money >= donaters_list_silder.v then
 								donatersCount = donatersCount + 1
 							end
 						end
 					else
 						if ini7[donaterNick] ~= nil then
-							if donaterNick == ini7[donaterNick].nick and ini7[donaterNick].money >= slider.v then
+							if donaterNick == ini7[donaterNick].nick and ini7[donaterNick].money >= donaters_list_silder.v then
 								donatersCount = donatersCount + 1
 							end
 						end
@@ -1727,18 +1725,18 @@ function imgui.OnDrawFrame()
 				end
 			end
 			imgui.Text(" ")
-			if switch then
+			if donaters_list then
 				if imgui.Button("Все", vec(20, 0)) then
-					switch = not switch
+					donaters_list = not donaters_list
 				end
 			else
 				if imgui.Button("Цель", vec(20, 0)) then
-					switch = not switch
+					donaters_list = not donaters_list
 				end
 			end
 			imgui.SameLine()
 			imgui.PushItemWidth(toScreenX(90))
-			if imgui.SliderInt("##inp7", slider, 1, 100000) then end
+			if imgui.SliderInt("##inp7", donaters_list_silder, 1, 100000) then end
 			imgui.PopItemWidth()
 			imgui.SameLine()
 			imgui.Text(" Донатеры онлайн " .. donatersCount .. "	")
@@ -1747,9 +1745,9 @@ function imgui.OnDrawFrame()
 				for i = 0, 1000 do
 					if sampIsPlayerConnected(i) then
 						donaterNick = sampGetPlayerNickname(i)
-						if switch then
+						if donaters_list then
 							if ini5[donaterNick] ~= nil then
-								if donaterNick == ini5[donaterNick].nick and ini5[donaterNick].money >= slider.v then
+								if donaterNick == ini5[donaterNick].nick and ini5[donaterNick].money >= donaters_list_silder.v then
 									if imgui.CollapsingHeader(string.format('%s [%s]', ini5[donaterNick].nick, i)) then
 										imgui.PushTextWrapPos(toScreenX(185))
 										imgui.BeginChild(string.format('%s', ini5[donaterNick].nick), vec(163, 40), true)
@@ -1777,7 +1775,7 @@ function imgui.OnDrawFrame()
 							end
 						else
 							if ini7[donaterNick] ~= nil then
-								if donaterNick == ini7[donaterNick].nick and ini7[donaterNick].money >= slider.v then
+								if donaterNick == ini7[donaterNick].nick and ini7[donaterNick].money >= donaters_list_silder.v then
 									if imgui.CollapsingHeader(string.format('%s [%s]', ini7[donaterNick].nick, i)) then
 										imgui.PushTextWrapPos(toScreenX(185))
 										imgui.BeginChild(string.format('%s', ini7[donaterNick].nick), vec(163, 40), true)
