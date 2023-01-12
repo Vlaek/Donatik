@@ -2441,7 +2441,7 @@ function imgui.OnDrawFrame()
 				end
 			else
 				if imgui.Button("Актуальная версия скрипта", vec(175, 18)) then
-					sampAddChatMessage(prefix .. "Обновление не требуется", main_color)
+					sampAddChatMessage(prefix .. u8:decode("Обновление не требуется"), main_color)
 				end
 			end
 			imgui.SameLine()
