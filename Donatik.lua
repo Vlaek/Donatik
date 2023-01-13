@@ -1,7 +1,7 @@
 script_name("Donatik")
 script_author("bier from Revolution")
 script_version("12.01.2023")
-script_version_number(21)
+script_version_number(22)
 script_url("https://vlaek.github.io/Donatik/")
 script.update = false
 script.reload = false
@@ -649,8 +649,8 @@ function main()
 end
 
 ------------------------------------------ Donatik Functions ------------------------------------------
+textlabel = {}
 function donatik.textLabelOverPlayerNickname()
-	textlabel = {}
 	if settings_ini.Settings.textLabel then
 		for i = 0, 999 do
 			if textlabel[i] ~= nil then
@@ -685,9 +685,9 @@ function donatik.textLabelOverPlayerNickname()
 	end
 end
 
+donatersOnline = {}
+donatersOnlineNickname = {}
 function donatik.topDonaterJoined()
-	donatersOnline = {}
-	donatersOnlineNickname = {}
 	if settings_ini.Settings.DonaterJoined then
 		for i = 0, 999 do 
 			if sampIsPlayerConnected(i) and sampGetPlayerScore(i) ~= 0 then
