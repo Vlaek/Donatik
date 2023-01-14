@@ -1,7 +1,7 @@
 script_name("Donatik")
 script_author("bier from Revolution")
-script_version("12.01.2023")
-script_version_number(22)
+script_version("14.01.2023")
+script_version_number(23)
 script_url("https://vlaek.github.io/Donatik/")
 script.update = false
 script.reload = false
@@ -619,6 +619,7 @@ function main()
 	percent = (tonumber(statistics_ziel_ini[DonateMoneyZiel].money)/tonumber(statistics_ziel_ini[DonateMoneyZiel].target))
 	
 	scriptLoaded = true
+	
 	imgui.Process = true
 	
 	sampAddChatMessage(prefix .. u8:decode"Успешно загрузился!", main_color)
@@ -1014,6 +1015,11 @@ function donatik.getGroupsCount()
 			v = 0,
 			name = u8:decode('Военный'),
 			color = 0xFF336600
+		},
+		{
+			v = 0,
+			name = u8:decode('Полицейский'),
+			color = 0xFF8B0000
 		}
 	}
 
@@ -1768,22 +1774,23 @@ end
 
 function imgui.OnDrawFrame()
 	if statistics_ini[DonateMoney].hud and scriptLoaded then
-		if buffering_bar_position == true then
+		if buffering_bar_position_fixed then
 			imgui.SetNextWindowPos(imgui.ImVec2(settings_ini.Settings.x, settings_ini.Settings.y))
-			inicfg.save(settings_ini, directSettings)
 		end
 		imgui.SetNextWindowSize(vec(83, 8))
-		statistics_ini = inicfg.load(DonateMoney, directStatistics)
 		imgui.Begin("Donaterka", _,  imgui.WindowFlags.NoTitleBar + imgui.WindowFlags.NoCollapse + imgui.WindowFlags.NoResize + imgui.WindowFlags.NoScrollbar)
-		local pos = imgui.GetWindowPos()
-		settings_ini.Settings.x = pos.x
-		settings_ini.Settings.y = pos.y
-		inicfg.save(settings_ini, directSettings)
-		imgui.BufferingBar(percent, vec(83, 8), false)
+		if not buffering_bar_position_fixed then
+			buffering_bar_position = imgui.GetWindowPos()
+			if buffering_bar_position.x ~= settings_ini.Settings.x or buffering_bar_position.y ~= settings_ini.Settings.y then
+				settings_ini.Settings.x = buffering_bar_position.x
+				settings_ini.Settings.y = buffering_bar_position.y
+				inicfg.save(settings_ini, directSettings)
+			end
+		end
+		imgui.bufferingBar(percent, vec(83, 8), false)
 		imgui.End()
 	end
 	if main_window_state.v and scriptLoaded then
-		local sw, sh = getScreenResolution()
 		imgui.ShowCursor = true
 		imgui.SetNextWindowPos(imgui.ImVec2(sw / 2, sh / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
 		imgui.SetNextWindowSize(vec(436, 225), imgui.Cond.FirstUseEver)
@@ -1918,14 +1925,14 @@ function imgui.OnDrawFrame()
 				imgui.PopTextWrapPos()
 				imgui.EndTooltip()
 			end
-			if buffering_bar_position then
+			if buffering_bar_position_fixed then
 				if imgui.Button("Фиксация HUDa", vec(116, 10)) then
-					buffering_bar_position = not buffering_bar_position
+					buffering_bar_position_fixed = not buffering_bar_position_fixed
 					inicfg.save(settings_ini, directSettings)
 				end
 			else
 				if imgui.Button("Зафиксировать HUD", vec(116, 10)) then
-					buffering_bar_position = not buffering_bar_position
+					buffering_bar_position_fixed = not buffering_bar_position_fixed
 					inicfg.save(settings_ini, directSettings)
 				end
 			end
@@ -1939,7 +1946,7 @@ function imgui.OnDrawFrame()
 				settings_ini.HotKey.bindHud = encodeJson(jsonHud.v)
 				inicfg.save(settings_ini, directSettings)
 			end
-			imgui.BufferingBar(percent, vec(354, 10), false)
+			imgui.bufferingBar(percent, vec(354, 10), false)
 			if imgui.IsItemHovered() then
 				imgui.BeginTooltip()
 				imgui.PushTextWrapPos(toScreenX(100))
@@ -2259,20 +2266,20 @@ function imgui.OnDrawFrame()
 				end
 			end
 			
-			local donatersCount = 0
+			local historyDonatersCount = 0
 			for i = 0, 1000 do
 				if sampIsPlayerConnected(i) then
 					donaterNick = sampGetPlayerNickname(i)
 					if donaters_list then
 						if donaters_ini ~= nil and donaters_ini[donaterNick] ~= nil then
 							if donaterNick == donaters_ini[donaterNick].nick and donaters_ini[donaterNick].money >= donaters_list_silder.v then
-								donatersCount = donatersCount + 1
+								historyDonatersCount = historyDonatersCount + 1
 							end
 						end
 					else
 						if donatersZiel_ini[donaterNick] ~= nil then
 							if donaterNick == donatersZiel_ini[donaterNick].nick and donatersZiel_ini[donaterNick].money >= donaters_list_silder.v then
-								donatersCount = donatersCount + 1
+								historyDonatersCount = historyDonatersCount + 1
 							end
 						end
 
@@ -2285,7 +2292,7 @@ function imgui.OnDrawFrame()
 			if imgui.SliderInt("##inp7", donaters_list_silder, 1, 100000) then end
 			imgui.PopItemWidth()
 			imgui.SameLine()
-			imgui.Text(" Донатеры онлайн " .. donatersCount .. "	")
+			imgui.Text(" Донатеры онлайн " .. historyDonatersCount .. "	")
 			imgui.BeginChild('History', vec(175, 190), true)
 				for y = 2038, 2020, -1 do
 					for m = 12, 1, -1 do
@@ -2537,7 +2544,7 @@ function imgui.OnDrawFrame()
 			imgui.Separator()
 			
 			imgui.SetCursorPos(vec(5, 65))
-			imgui.RoundDiagram(groupsDiagram, 120, 3600, 0)
+			imgui.RoundDiagram(groupsDiagram, 120, 360, 0)
 			
 			imgui.SetCursorPos(vec(180, 65))
 			imgui.RoundDiagram(gendersDiagram, 120, 360, 525)
@@ -2810,7 +2817,7 @@ function imgui.TextColoredRGB(text)
     render_text(text)
 end
 
-function imgui.BufferingBar(value, size_arg, circle)
+function imgui.bufferingBar(value, size_arg, circle)
     local style = imgui.GetStyle()
     local size = size_arg;
 
@@ -2855,11 +2862,14 @@ function imgui.BufferingBar(value, size_arg, circle)
 end
 
 function imgui.initBuffers()
+	sw, sh = getScreenResolution()
+	buffering_bar_position = nil
+	imgui.bufferingBarHovered = false
 	tab = imgui.ImInt(1)
 	main_window_state = imgui.ImBool(false)
 	text_buffer_target, text_buffer_name, text_buffer_nick, text_buffer_summa = imgui.ImBuffer(256), imgui.ImBuffer(256), imgui.ImBuffer(256), imgui.ImBuffer(256)
 	text_buffer_token, text_buffer_chat_id = imgui.ImBuffer(256), imgui.ImBuffer(256)
-	buffering_bar_position = true
+	buffering_bar_position_fixed = true
 	donaters_list_silder = imgui.ImInt(1)
 	donaters_list = true
 	tLastKeys = {}
