@@ -3381,7 +3381,7 @@ function tg.sendPhoto(caption)
 				},
 				tostring(settings_ini.Telegram.token))
 			if not res then
-				sampAddChatMessage(prefix.."tg.sendPhoto error", main_color)
+				sampAddChatMessage(prefix.."tg.sendPhoto error: " .. err, main_color)
 			end
 				
 			--[[local result, response = tg.request(
