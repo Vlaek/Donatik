@@ -1,7 +1,7 @@
 script_name("Donatik")
 script_author("bier from Revolution")
-script_version("14.01.2023")
-script_version_number(23)
+script_version("24.01.2023")
+script_version_number(24)
 script_url("https://vlaek.github.io/Donatik/")
 script.update = false
 script.reload = false
@@ -34,7 +34,7 @@ try(function()
 		encoding.default = 'CP1251'
 		u8               = encoding.UTF8
 	end,
-	function(e)
+	function()
 		sampAddChatMessage(prefix .. "An error occurred while loading libraries", main_color)
 		thisScript():unload()
 	end)
@@ -363,10 +363,10 @@ function main()
     if not isSampLoaded() or not isSampfuncsLoaded() then return end
     while not isSampAvailable() do wait(0) end
     repeat wait(0) until sampGetCurrentServerName() ~= "SA-MP"
-    repeat wait(0) until sampGetCurrentServerName():find("Samp%-Rp.Ru") or sampGetCurrentServerName():find("SRP")
+    repeat wait(0) until sampGetCurrentServerName():find("Samp%-Rp.Ru") or sampGetCurrentServerName():find("SRP") or sampGetCurrentServerName():find("Evolve")
 	repeat wait(0) until sampIsLocalPlayerSpawned()
 	server = sampGetCurrentServerName():gsub('|', '')
-	server = (server:find('02') and 'Two' or (server:find('Revo') and 'Revolution' or (server:find('Legacy') and 'Legacy' or (server:find('Classic') and 'Classic' or ''))))
+	server = (server:find('02') and 'Two' or (server:find('Revo') and 'Revolution' or (server:find('Legacy') and 'Legacy' or (server:find('Classic') and 'Classic' or (server:find('Saint') and 'Saint-Louis' or '')))))
 	if server == '' then thisScript():unload() end
 	local _, my_id = sampGetPlayerIdByCharHandle(PLAYER_PED)
 	my_name = sampGetPlayerNickname(my_id)
@@ -387,7 +387,9 @@ function main()
 	directTodayDonaters		= string.format("Donatik\\%s\\%s\\todayDonaters.ini", server, my_name)
 	directSettings			= string.format("Donatik\\%s\\%s\\Settings.ini", server, my_name)
 	directDonatersRating	= string.format("Donatik\\%s\\%s\\DonatersRating.ini", server, my_name)
-	screenshot_dir = string.format('%s\\SAMP\\%s', screenshot.getUserDirectoryPath(), "Donatik")
+	if screenshotIsAvailable then
+		screenshot_dir = string.format('%s\\SAMP\\%s', screenshot.getUserDirectoryPath(), "Donatik")
+	end
 
 	sampRegisterChatCommand("donaters", 		donatik.sendTodayDonaters)		-- список донатеров
 	sampRegisterChatCommand("topdonaters", 		donatik.sendTopDonaters)		-- список топ донатеров за все время
@@ -619,7 +621,6 @@ function main()
 	percent = (tonumber(statistics_ziel_ini[DonateMoneyZiel].money)/tonumber(statistics_ziel_ini[DonateMoneyZiel].target))
 	
 	scriptLoaded = true
-	
 	imgui.Process = true
 	
 	sampAddChatMessage(prefix .. u8:decode"Успешно загрузился!", main_color)
@@ -1251,7 +1252,7 @@ end
 function sampev.onServerMessage(color, text)
 	if scriptLoaded then
 		if settings_ini.Settings.Switch then
-			if string.find(text, u8:decode"^ Вы получили .+ вирт, от .+%[%d+%]$") or string.find(text, u8:decode"^ Вы получили .+ вирт, на счет от .+$") then
+			if string.find(text, u8:decode"^ Вы получили .+ вирт, от .+%[%d+%]$") or string.find(text, u8:decode"^ Вы получили .+ вирт, на счет от .+$") or string.find(text, u8:decode"^ Вы получили .+ вирт от .+%[%d+%]$") then
 				local donater = {}
 				donater.money = string.match(text, u8:decode"Вы получили (%d+) вирт")
 				donater.gender = u8:decode("Мужской")
@@ -1260,7 +1261,7 @@ function sampev.onServerMessage(color, text)
 				if string.find(text, u8:decode"^ Вы получили .+ вирт, на счет от .+$") then 
 					sampAddChatMessage(prefix .. u8:decode"Денежный перевод на счет!", main_color)
 					donater.nick = string.match(text, u8:decode"от (.+)% %[")
-				elseif string.find(text, u8:decode"^ Вы получили .+ вирт, от .+$") then
+				elseif string.find(text, u8:decode"^ Вы получили .+ вирт, от .+$") or string.find(text, u8:decode"^ Вы получили .+ вирт от .+$") then
 					donater.nick = string.match(text, u8:decode"от (.+)%[")
 					peds = getAllChars()
 					for k, ped in pairs(peds) do
@@ -1277,7 +1278,11 @@ function sampev.onServerMessage(color, text)
 				end
 				
 				if settings_ini.Telegram.bool then
-					tg.sendPhoto(text)
+					if screenshotIsAvailable then
+						tg.sendPhoto(text)
+					else
+						tg.sendNotification(text)
+					end
 				end
 				
 				if settings_ini.Settings.DonateNotify then
@@ -3367,7 +3372,19 @@ function tg.sendPhoto(caption)
 			wait(1000)
 			screenshot.requestEx(screenshot_dir, "screenshot")
 			wait(1000)
-			local result, response = tg.request(
+			local res, err = pcall(tg.request, 'POST', 'sendPhoto', {
+					['chat_id'] = tostring(settings_ini.Telegram.chat_id),
+					['caption'] = u8(tostring(caption))
+				},
+				{
+					['photo'] = string.format('%s\\%s', screenshot_dir, "screenshot.png")
+				},
+				tostring(settings_ini.Telegram.token))
+			if not res then
+				sampAddChatMessage(prefix.."tg.sendPhoto error", main_color)
+			end
+				
+			--[[local result, response = tg.request(
 				'POST',
 				'sendPhoto',
 				{
@@ -3378,7 +3395,7 @@ function tg.sendPhoto(caption)
 					['photo'] = string.format('%s\\%s', screenshot_dir, "screenshot.png")
 				},
 				tostring(settings_ini.Telegram.token)
-			)
+			)]]
 		end)
 	else
 		sampAddChatMessage(prefix .. u8:decode("Библиотека не обнаружена!"), main_color)
@@ -3434,8 +3451,6 @@ function tg.request(requestMethod, telegramMethod, requestParameters, requestFil
             file:close()
         else
 			if fileType ~= nil then
-				sampAddChatMessage(tostring(requestParameters[fileType]), -1)
-				sampAddChatMessage(tostring(fileType), -1)
 				requestParameters[fileType] = fileName
 			end
         end
