@@ -1,14 +1,12 @@
 script_name("Donatik")
 script_author("bier from Revolution")
 script_version("24.01.2023")
-script_version_number(24)
+script_version_number(25)
 script_url("https://vlaek.github.io/Donatik/")
-script.update = false
-script.reload = false
+script = {update = false, loaded = false, reload = false}
 
-local main_color = 0xFFFF00
-local scriptLoaded = false
-local prefix = "{FFFF00} [" .. thisScript().name .. "] {FFFFFF}"
+local main_color, error_color = 0xFFFF00, 0xFF0000
+local prefix, error_prefix = "{FFFF00} [" .. thisScript().name .. "] {FFFFFF}", " [" .. thisScript().name .. "] "
 
 function try(f, catch_f)
 	local status, exception = pcall(f)
@@ -34,10 +32,19 @@ try(function()
 		encoding.default = 'CP1251'
 		u8               = encoding.UTF8
 	end,
-	function()
-		sampAddChatMessage(prefix .. "An error occurred while loading libraries", main_color)
+	function(e)
+		sampAddChatMessage(error_prefix .. "An error occurred while loading libraries", error_color)
+		print(error_prefix .. e)
 		thisScript():unload()
 	end)
+
+function script.sendMessage(text)
+	sampAddChatMessage(prefix .. u8:decode(text), main_color)
+end
+
+function script.sendErrorMessage(text)
+	sampAddChatMessage(error_prefix .. u8:decode(text), error_color)
+end
 
 local donatik = {}
 local tg = {}
@@ -359,34 +366,80 @@ local skins = {
 	[311] = {group = u8:decode("Полицейский"), 	gender = u8:decode("Мужской")}
 }
 
+local servers = {
+	SRP = {
+		"02",
+		"Revolution",
+		"Legacy",
+		"Classic"
+	},
+	Evolve = {
+		"Saint-Louis",
+		"Cleveland"
+	},
+	Arizona = {
+		"Phoenix",
+		"Tucson",
+		"Scottdale",
+		"Chandler",
+		"Brainburg",
+		"Saint Rose",
+		"Mesa",
+		"Red Rock",
+		"Yuma",
+		"Surprise",
+		"Prescott",
+		"Glendale",
+		"Kingman",
+		"Winslow",
+		"Payson",
+		"Gilbert",
+		"Show-Low",
+		"Casa Grande",
+		"Page",
+		"Sun City",
+		"Queen Creek",
+		"Sedona",
+		"Holiday",
+		"Wednesday"
+	}
+}
+
 function main()
     if not isSampLoaded() or not isSampfuncsLoaded() then return end
     while not isSampAvailable() do wait(0) end
     repeat wait(0) until sampGetCurrentServerName() ~= "SA-MP"
-    repeat wait(0) until sampGetCurrentServerName():find("Samp%-Rp.Ru") or sampGetCurrentServerName():find("SRP") or sampGetCurrentServerName():find("Evolve")
+	local serverName = sampGetCurrentServerName()
+	project = (serverName:find('Samp%-Rp.Ru') and 'SRP' or (serverName:find('Evolve') and 'Evolve' or (serverName:find('Arizona') and 'Arizona' or '')))
+	if project == '' then script.sendMessage("Сервер не поддерживается") thisScript():unload() return false end
+	server = ''
+	for k, v in pairs(servers[project]) do
+		if k ~= nil then
+			if string.find(serverName, v, 1, true) then
+				server = v
+			end
+		end
+	end
 	repeat wait(0) until sampIsLocalPlayerSpawned()
-	server = sampGetCurrentServerName():gsub('|', '')
-	server = (server:find('02') and 'Two' or (server:find('Revo') and 'Revolution' or (server:find('Legacy') and 'Legacy' or (server:find('Classic') and 'Classic' or (server:find('Saint') and 'Saint-Louis' or '')))))
-	if server == '' then thisScript():unload() end
+	if server == '' then script.sendMessage("Сервер не поддерживается") thisScript():unload() return false end
 	local _, my_id = sampGetPlayerIdByCharHandle(PLAYER_PED)
 	my_name = sampGetPlayerNickname(my_id)
-	
 	my_day   = os.date("%d")
 	my_month = os.date("%m")
 	my_year  = os.date("%Y")
 
 	AdressConfig = string.format("%s\\moonloader\\config" , getGameDirectory())
-	AdressFolder = string.format("%s\\moonloader\\config\\Donatik\\%s\\%s", getGameDirectory(), server, my_name)
+	AdressFolder = string.format("%s\\moonloader\\config\\Donatik\\%s\\%s\\%s", getGameDirectory(), project, server, my_name)
 	
 	if not doesDirectoryExist(AdressConfig) then createDirectory(AdressConfig) end
 	if not doesDirectoryExist(AdressFolder) then createDirectory(AdressFolder) end
 	
-	directStatistics		= string.format("Donatik\\%s\\%s\\DonateMoney.ini", server, my_name)
-	directTodayTopDonaters	= string.format("Donatik\\%s\\%s\\todayTopDonaters.ini", server, my_name)
-	directDonaters			= string.format("Donatik\\%s\\%s\\Donaters.ini", server, my_name)
-	directTodayDonaters		= string.format("Donatik\\%s\\%s\\todayDonaters.ini", server, my_name)
-	directSettings			= string.format("Donatik\\%s\\%s\\Settings.ini", server, my_name)
-	directDonatersRating	= string.format("Donatik\\%s\\%s\\DonatersRating.ini", server, my_name)
+	directStatistics		= string.format("Donatik\\%s\\%s\\%s\\DonateMoney.ini", project, server, my_name)
+	directTodayTopDonaters	= string.format("Donatik\\%s\\%s\\%s\\todayTopDonaters.ini", project, server, my_name)
+	directDonaters			= string.format("Donatik\\%s\\%s\\%s\\Donaters.ini", project, server, my_name)
+	directTodayDonaters		= string.format("Donatik\\%s\\%s\\%s\\todayDonaters.ini", project, server, my_name)
+	directSettings			= string.format("Donatik\\%s\\%s\\%s\\Settings.ini", project, server, my_name)
+	directDonatersRating	= string.format("Donatik\\%s\\%s\\%s\\DonatersRating.ini", project, server, my_name)
 	if screenshotIsAvailable then
 		screenshot_dir = string.format('%s\\SAMP\\%s', screenshot.getUserDirectoryPath(), "Donatik")
 	end
@@ -404,20 +457,6 @@ function main()
 		function() 
 			main_window_state.v = not main_window_state.v 
 			imgui.Process = main_window_state.v 
-		end)
-	sampRegisterChatCommand("dcalculate", 
-		function()
-			sampAddChatMessage("------------------------------------------------------------------------------------------------------------------------------------------------", main_color)
-			calculateMoneyForAllTime()
-			calculateMoneyForAllTimeOnTheGoal()
-			checkDublicates()
-			setGenders()
-			setAllRanks()
-			setAllGroups()
-			todayTopDonatersAndMoney()
-			script.reload = true
-			thisScript():reload()
-			sampAddChatMessage("------------------------------------------------------------------------------------------------------------------------------------------------", main_color)
 		end)
 	
 	DonateMoney = string.format('DonateMoney')
@@ -532,13 +571,13 @@ function main()
 		inicfg.save(settings_ini, directSettings)
 	end
 	
-	AdressFolderZiel = string.format("%s\\moonloader\\config\\Donatik\\%s\\%s\\%s", getGameDirectory(), server, my_name, statistics_ini[DonateMoney].zielName)
+	AdressFolderZiel = string.format("%s\\moonloader\\config\\Donatik\\%s\\%s\\%s\\%s", getGameDirectory(), project, server, my_name, statistics_ini[DonateMoney].zielName)
 	
 	if not doesDirectoryExist(AdressFolderZiel) then createDirectory(AdressFolderZiel) end
 	
-	directDonatersZiel  = string.format("Donatik\\%s\\%s\\%s\\Donaters.ini", server, my_name, statistics_ini[DonateMoney].zielName)
-	directStatisticsZiel  = string.format("Donatik\\%s\\%s\\%s\\DonateMoney.ini", server, my_name, statistics_ini[DonateMoney].zielName)
-	directDonatersRatingZiel = string.format("Donatik\\%s\\%s\\%s\\DonatersRating.ini", server, my_name, statistics_ini[DonateMoney].zielName)
+	directDonatersZiel  = string.format("Donatik\\%s\\%s\\%s\\%s\\Donaters.ini", project, server, my_name, statistics_ini[DonateMoney].zielName)
+	directStatisticsZiel  = string.format("Donatik\\%s\\%s\\%s\\%s\\DonateMoney.ini", project, server, my_name, statistics_ini[DonateMoney].zielName)
+	directDonatersRatingZiel = string.format("Donatik\\%s\\%s\\%s\\%s\\DonatersRating.ini", project, server, my_name, statistics_ini[DonateMoney].zielName)
 	
 	PlayerZielCount = string.format('Count')
 	if donatersRatingZiel_ini[PlayerZielCount] == nil then
@@ -620,13 +659,13 @@ function main()
 	
 	percent = (tonumber(statistics_ziel_ini[DonateMoneyZiel].money)/tonumber(statistics_ziel_ini[DonateMoneyZiel].target))
 	
-	scriptLoaded = true
+	script.loaded = true
 	imgui.Process = true
 	
-	sampAddChatMessage(prefix .. u8:decode"Успешно загрузился!", main_color)
+	script.sendMessage("Успешно загрузился! {40E0D0}[" .. project .. "-" .. server .. "]")
 	
 	if not settings_ini.Settings.Switch then
-		sampAddChatMessage(prefix .. u8:decode"Скрипт в данный момент выключен! Включить /dhud > Информация > Включить", main_color)
+		script.sendMessage("Скрипт в данный момент выключен! Включить /dhud > Информация > Включить")
 	end
 	
 	while true do
@@ -639,7 +678,7 @@ function main()
 		
 		if not sampIsDialogActive() and not sampIsChatInputActive() then
 			if (isKeyDown(vkeys.VK_MENU) and isKeyJustPressed(vkeys.VK_P)) or isKeyJustPressed(vkeys.VK_PAUSE) then
-				sampAddChatMessage(prefix .. u8:decode"Сообщения остановлены", main_color)
+				script.sendMessage("Сообщения остановлены")
 				chatManager.initQueue()
 			end
 		end
@@ -698,7 +737,7 @@ function donatik.topDonaterJoined()
 					if donatersOnlineNickname[i] == donaters_ini[donatersOnlineNickname[i]].nick then
 						if not donatersOnline[i] then
 							if tonumber(donaters_ini[donatersOnlineNickname[i]].money) >= tonumber(settings_ini.Settings.donateSize) then
-								sampAddChatMessage(prefix .. u8:decode"На сервер зашёл{40E0D0} " .. donaters_ini[donatersOnlineNickname[i]].nick .. " [" .. i .. "]", main_color)
+								script.sendMessage("На сервер зашёл{40E0D0} " .. donaters_ini[donatersOnlineNickname[i]].nick .. " [" .. i .. "]")
 								donatersOnline[i] = true
 							end
 						end
@@ -706,7 +745,7 @@ function donatik.topDonaterJoined()
 				end
 			else
 				if donatersOnline[i] then
-					sampAddChatMessage(prefix .. u8:decode"С сервера вышел{40E0D0} " .. donatersOnlineNickname[i], main_color)
+					script.sendMessage("С сервера вышел{40E0D0} " .. donatersOnlineNickname[i])
 					donatersOnline[i] = false
 					donatersOnlineNickname[i] = nil
 				end
@@ -1112,157 +1151,47 @@ function round(num)
 	end
 end
 
-function calculateMoneyForAllTime()
-	local money = 0
-	for i = 1, tonumber(donatersRating_ini[PlayerCount].count) do
-		money = money + donatersRating_ini[i].money
-	end
-	if statistics_ini[DonateMoney].money ~= money then
-		sampAddChatMessage(u8:decode(prefix.."Разница денег за все время составляет: " .. statistics_ini[DonateMoney].money - money), main_color)
-		statistics_ini[DonateMoney].money = money
-		if inicfg.save(statistics_ini, directStatistics) then
-			sampAddChatMessage(u8:decode(prefix.."Перезаписано"), main_color)
-		end
-	else
-		sampAddChatMessage(u8:decode(prefix .. "Денег за все время: " .. convertNumber(money) .. " от " .. donatersRating_ini[PlayerCount].count .. " игроков"), main_color)
-	end
-end
-
-function calculateMoneyForAllTimeOnTheGoal()
-	local money = 0
-	for i = 1, tonumber(donatersRatingZiel_ini[PlayerZielCount].count) do
-		money = money + donatersRatingZiel_ini[i].money
-	end
-	if statistics_ziel_ini[DonateMoneyZiel].money ~= money then
-		sampAddChatMessage(u8:decode(prefix.."Разница денег на цель составляет: " .. statistics_ziel_ini[DonateMoneyZiel].money - money), main_color)
-		statistics_ziel_ini[DonateMoneyZiel].money = money
-		if inicfg.save(statistics_ziel_ini, directStatisticsZiel) then
-			sampAddChatMessage(u8:decode(prefix.."Перезаписано"), main_color)
-		end
-	else
-		sampAddChatMessage(u8:decode(prefix .. "Денег на цель за все время: " .. convertNumber(money) .. " от " .. donatersRatingZiel_ini[PlayerZielCount].count .. " игроков"), main_color)
-	end
-end
-
-function checkDublicates()
-	dublicates = {}
-	for i = 1, donatersRating_ini[PlayerCount].count do
-		dublicateCount = 0
-		for j = 1, donatersRating_ini[PlayerCount].count do
-			if donatersRating_ini[i].nick == donatersRating_ini[j].nick then
-				dublicateCount = dublicateCount + 1
-				if dublicateCount > 1 then
-					dublicates[#dublicates + 1] = donatersRating_ini[i].nick
-					donatersRating_ini[i].money = -100
-				end
-			end
-		end
-	end
-	if #dublicates > 0 then
-		sampAddChatMessage(prefix..u8:decode"Дубликаты в общем рейтинге: ", main_color)
-		donatik.sortDonatersRating()
-	else
-		sampAddChatMessage(u8:decode(prefix.."Дубликаты в рейтинге за все время не найдены!"), main_color)
-	end
-	for i = 1, #dublicates do
-		sampAddChatMessage(prefix..dublicates[i], main_color)
-	end
-
-	dublicates = {}
-	for i = 1, donatersRatingZiel_ini[PlayerCount].count do
-		dublicateCount = 0
-		for j = 1, donatersRatingZiel_ini[PlayerCount].count do
-			if donatersRatingZiel_ini[i].nick == donatersRatingZiel_ini[j].nick then
-				dublicateCount = dublicateCount + 1
-				if dublicateCount > 1 then
-					dublicates[#dublicates + 1] = donatersRatingZiel_ini[i].nick
-					donatersRatingZiel_ini[i].money = -100
-				end
-			end
-		end
-	end
-	if #dublicates > 0 then
-		sampAddChatMessage(prefix..u8:decode"Дубликаты в рейтинге цели: ", main_color)
-		donatik.sortDonatersZielRating()
-	else
-		sampAddChatMessage(u8:decode(prefix.."Дубликаты в рейтинге на цель не найдены!"), main_color)
-	end
-	for i = 1, #dublicates do
-		sampAddChatMessage(prefix..dublicates[i], main_color)
-	end
-end
-
-function setAllRanks()
-	for i = 1, donatersRating_ini.Count.count do
-		if donaters_ini[donatersRating_ini[i].nick] ~= nil then
-			donatik.setRank(donatersRating_ini[i].nick)
-		end
-	end
-	sampAddChatMessage(u8:decode(prefix.."Ранги добавлены!"), main_color)
-end
-
-function setAllGroups()
-	for i = 1, donatersRating_ini.Count.count do
-		if donaters_ini[donatersRating_ini[i].nick] ~= nil then
-			donaters_ini[donatersRating_ini[i].nick].group = u8:decode("Гражданский")
-		end
-	end
-	inicfg.save(donaters_ini, directDonaters)
-	sampAddChatMessage(u8:decode(prefix.."Группы добавлены!"), main_color)
-end
-
-function setGenders()
-	for i = 1, donatersRating_ini.Count.count do
-		if donaters_ini[donatersRating_ini[i].nick] ~= nil then
-			if donaters_ini[donatersRating_ini[i].nick].gender == u8:decode("Господин") then
-				donaters_ini[donatersRating_ini[i].nick].gender = u8:decode("Мужской")
-			elseif donaters_ini[donatersRating_ini[i].nick].gender == u8:decode("Госпожа") then
-				donaters_ini[donatersRating_ini[i].nick].gender = u8:decode("Женский")
-			else
-				donaters_ini[donatersRating_ini[i].nick].gender = u8:decode("Мужской")
-			end
-		end
-	end
-	inicfg.save(donaters_ini, directDonaters)
-end
-
-function todayTopDonatersAndMoney()
-	ini = {}
-	directTodayDonateMoney = string.format("Donatik\\%s\\%s\\todayDonateMoney.ini", server, my_name)
-	ini	= inicfg.load(ini, directTodayDonateMoney)
-	for y = 2038, 2020, -1 do
-		for m = 12, 1, -1 do
-			for d = 31, 1, -1 do
-				if tonumber(d) > 0 and tonumber(d) < 10 then d = string.format('0%d', d) end
-				if tonumber(m) > 0 and tonumber(m) < 10 then m = string.format('0%d', m) end
-				selectedDay = string.format('%s-%s-%s', d, m, y)
-				if todayTopDonaters_ini[selectedDay] ~= nil and todayTopDonaters_ini[selectedDay].firstSumma ~= 0 then
-					if todayTopDonaters_ini[selectedDay] ~= nil and todayTopDonaters_ini[selectedDay].money ~= 0 then
-						todayTopDonaters_ini[selectedDay].money = ini[selectedDay].money
-						todayTopDonaters_ini[selectedDay].count = ini[selectedDay].count
-					end
-				end
-			end
-		end
-	end
-	sampAddChatMessage(u8:decode(prefix.."Файлы объединены!"), main_color)
-	inicfg.save(todayTopDonaters_ini, directTodayTopDonaters)
-end
+local MESSAGES = {
+	SRP = {
+		PAY 		= u8:decode"^ Вы получили .+ вирт, от .+%[%d+%]$",
+		PAY_MONEY 	= u8:decode"^ Вы получили (%d+) вирт",
+		PAY_NICK 	= u8:decode"от (.+)%[",
+		BANK 		= u8:decode"^ Вы получили .+ вирт, на счет от .+$",
+		BANK_MONEY 	= u8:decode"^ Вы получили .+ вирт, на счет от .+$",
+		BANK_NICK 	= u8:decode"от (.+)% %["
+	},
+	Evolve = {
+		PAY 		= u8:decode"^ Вы получили .+ вирт от .+%[%d+%]$",
+		PAY_MONEY 	= u8:decode"^ Вы получили (%d+) вирт",
+		PAY_NICK 	= u8:decode"от (.+)%[",
+		BANK 		= u8:decode"^ Вы получили .+ вирт на счет от .+$",
+		BANK_MONEY 	= u8:decode"^ Вы получили .+ вирт на счет от .+$",
+		BANK_NICK 	= u8:decode"от (.+)% %["
+	},
+	Arizona = {
+		PAY			= u8:decode"^.+ передал%(а%) вам %$.+$",
+		PAY_MONEY  	= u8:decode"передал%(а%) вам %$(%d+)$",
+		PAY_NICK  	= u8:decode"(.+) передал%(а%) вам",
+		BANK 		= u8:decode"^ Вам поступил перевод на ваш счет в размере %$.+ от жителя .+%(",
+		BANK_MONEY 	= u8:decode"^ Вам поступил перевод на ваш счет в размере %$(%d+)",
+		BANK_NICK 	= u8:decode"от жителя (.+)%("
+	}
+}
 
 function sampev.onServerMessage(color, text)
-	if scriptLoaded then
+	if script.loaded then
 		if settings_ini.Settings.Switch then
-			if string.find(text, u8:decode"^ Вы получили .+ вирт, от .+%[%d+%]$") or string.find(text, u8:decode"^ Вы получили .+ вирт, на счет от .+$") or string.find(text, u8:decode"^ Вы получили .+ вирт от .+%[%d+%]$") then
+			if string.find(text, MESSAGES[project].PAY) or string.find(text, MESSAGES[project].BANK) then
 				local donater = {}
-				donater.money = string.match(text, u8:decode"Вы получили (%d+) вирт")
 				donater.gender = u8:decode("Мужской")
 				donater.rank = u8:decode("Господин")
-				
-				if string.find(text, u8:decode"^ Вы получили .+ вирт, на счет от .+$") then 
-					sampAddChatMessage(prefix .. u8:decode"Денежный перевод на счет!", main_color)
-					donater.nick = string.match(text, u8:decode"от (.+)% %[")
-				elseif string.find(text, u8:decode"^ Вы получили .+ вирт, от .+$") or string.find(text, u8:decode"^ Вы получили .+ вирт от .+$") then
-					donater.nick = string.match(text, u8:decode"от (.+)%[")
+				if string.find(text, MESSAGES[project].BANK) then 
+					script.sendMessage("Денежный перевод на счет!")
+					donater.nick  = string.match(text, MESSAGES[project].BANK_NICK)
+					donater.money = string.match(text, MESSAGES[project].BANK_MONEY)
+				elseif string.find(text, MESSAGES[project].PAY) then
+					donater.nick  = string.match(text, MESSAGES[project].PAY_NICK)
+					donater.money = string.match(text, MESSAGES[project].PAY_MONEY)
 					peds = getAllChars()
 					for k, ped in pairs(peds) do
 						if doesCharExist(ped) then
@@ -1287,43 +1216,43 @@ function sampev.onServerMessage(color, text)
 				
 				if settings_ini.Settings.DonateNotify then
 					if tonumber(donater.money) >= 1000000 then
-						sampAddChatMessage(u8:decode(prefix .. "Вы получили {FF0000}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF0000}" .. donater.nick), main_color) -- red
+						script.sendMessage("Вы получили {FF0000}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF0000}" .. donater.nick) -- red
 						if settings_ini.Settings.Sound then soundManager.playSound("1k") end				
 					elseif tonumber(donater.money) >= 500000 and tonumber(donater.money) < 1000000 then
-						sampAddChatMessage(u8:decode(prefix .. "Вы получили {FF0000}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF0000}" .. donater.nick), main_color) -- red
+						script.sendMessage("Вы получили {FF0000}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF0000}" .. donater.nick) -- red
 						if settings_ini.Settings.Sound then soundManager.playSound("500k") end
 					elseif tonumber(donater.money) >= 250000 and tonumber(donater.money) < 500000 then
-						sampAddChatMessage(u8:decode(prefix .. "Вы получили {FF0000}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF0000}" .. donater.nick), main_color) -- red
+						script.sendMessage("Вы получили {FF0000}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF0000}" .. donater.nick) -- red
 						if settings_ini.Settings.Sound then soundManager.playSound("250k") end
 					elseif tonumber(donater.money) >= 100000 and tonumber(donater.money) < 250000 then
-						sampAddChatMessage(u8:decode(prefix .. "Вы получили {FF0000}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF0000}" .. donater.nick), main_color) -- red
+						script.sendMessage("Вы получили {FF0000}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF0000}" .. donater.nick) -- red
 						if settings_ini.Settings.Sound then soundManager.playSound("100k") end
 					elseif tonumber(donater.money) >= 75000 and tonumber(donater.money) < 100000 then
-						sampAddChatMessage(u8:decode(prefix .. "Вы получили {FF1493}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF1493}" .. donater.nick), main_color) -- yellow
+						script.sendMessage("Вы получили {FF1493}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF1493}" .. donater.nick) -- yellow
 						if settings_ini.Settings.Sound then soundManager.playSound("75k") end
 					elseif tonumber(donater.money) >= 50000 and tonumber(donater.money) < 75000 then
-						sampAddChatMessage(u8:decode(prefix .. "Вы получили {FF00FF}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF00FF}" .. donater.nick), main_color) -- pink
+						script.sendMessage("Вы получили {FF00FF}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF00FF}" .. donater.nick) -- pink
 						if settings_ini.Settings.Sound then soundManager.playSound("50k") end
 					elseif tonumber(donater.money) >= 25000 and tonumber(donater.money) < 50000 then
-						sampAddChatMessage(u8:decode(prefix .. "Вы получили {800080}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {800080}" .. donater.nick), main_color) -- purple
+						script.sendMessage("Вы получили {800080}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {800080}" .. donater.nick) -- purple
 						if settings_ini.Settings.Sound then soundManager.playSound("25k") end
 					elseif tonumber(donater.money) >= 10000 and tonumber(donater.money) < 25000 then
-						sampAddChatMessage(u8:decode(prefix .. "Вы получили {0000FF}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {0000FF}" .. donater.nick), main_color) -- blue
+						script.sendMessage("Вы получили {0000FF}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {0000FF}" .. donater.nick) -- blue
 						if settings_ini.Settings.Sound then soundManager.playSound("10k") end
 					elseif tonumber(donater.money) >= 5000 and tonumber(donater.money) < 10000 then
-						sampAddChatMessage(u8:decode(prefix .. "Вы получили {00FFFF}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {00FFFF}" .. donater.nick), main_color) -- aqua
+						script.sendMessage("Вы получили {00FFFF}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {00FFFF}" .. donater.nick) -- aqua
 						if settings_ini.Settings.Sound then soundManager.playSound("5k") end
 					elseif tonumber(donater.money) >= 1000 and tonumber(donater.money) < 5000 then
-						sampAddChatMessage(u8:decode(prefix .. "Вы получили {00FF00}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {00FF00}" .. donater.nick), main_color) -- green
+						script.sendMessage("Вы получили {00FF00}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {00FF00}" .. donater.nick) -- green
 						if settings_ini.Settings.Sound then soundManager.playSound("1k") end
 					elseif tonumber(donater.money) >= 100 and tonumber(donater.money) < 1000 then
-						sampAddChatMessage(u8:decode(prefix .. "Вы получили {808000}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {808000}" .. donater.nick), main_color) -- olive
+						script.sendMessage("Вы получили {808000}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {808000}" .. donater.nick) -- olive
 						if settings_ini.Settings.Sound then soundManager.playSound("100") end
 					elseif tonumber(donater.money) < 100 then
-						sampAddChatMessage(u8:decode(prefix .. "Вы получили {556B2F}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {556B2F}" .. donater.nick), main_color) -- dark olive
+						script.sendMessage("Вы получили {556B2F}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {556B2F}" .. donater.nick) -- dark olive
 						if settings_ini.Settings.Sound then soundManager.playSound("0") end
 					else
-						sampAddChatMessage(u8:decode(prefix .. "Вы получили {FF00FF}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF00FF}" .. donater.nick), main_color) -- purple Magenta
+						script.sendMessage("Вы получили {FF00FF}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF00FF}" .. donater.nick) -- purple Magenta
 					end
 				end
 				
@@ -1349,12 +1278,7 @@ function sampev.onServerMessage(color, text)
 						}
 					}, directDonaters)
 					if settings_ini.Settings.DonatersNotify then
-						--if u8:decode(gender) == u8:decode"Господин" then 
-						--	sampAddChatMessage(u8:decode(prefix .. "Господин {40E0D0}" .. donater.nick .. "{FFFFFF} был добавлен в базу данных"), main_color)
-						--else
-						--	sampAddChatMessage(u8:decode(prefix .. "Госпожа {40E0D0}" .. donater.nick .. "{FFFFFF} была добавлена в базу данных"), main_color)
-						--end
-						sampAddChatMessage(u8:decode(prefix .. "Сумма пожертвований от {40E0D0}" .. donater.nick .. "{FFFFFF} составляет: {40E0D0}" .. convertNumber(donaters_ini[Player].money)), main_color)
+						script.sendMessage("Сумма пожертвований от {40E0D0}" .. donater.nick .. "{FFFFFF} составляет: {40E0D0}" .. convertNumber(donaters_ini[Player].money))
 					end
 					
 					PlayerRating = string.format('%d', donatersRating_ini[PlayerCount].count + 1)
@@ -1385,7 +1309,7 @@ function sampev.onServerMessage(color, text)
 					donaters_ini[Player].money = donaters_ini[Player].money + donater.money
 					donaters_ini[Player].group = donater.group
 					if settings_ini.Settings.DonatersNotify then
-						sampAddChatMessage(u8:decode(prefix .. "Сумма пожертвований за все время от {40E0D0}" .. donater.nick .. "{FFFFFF} составляет: {40E0D0}" .. convertNumber(donaters_ini[Player].money)), main_color)
+						script.sendMessage("Сумма пожертвований за все время от {40E0D0}" .. donater.nick .. "{FFFFFF} составляет: {40E0D0}" .. convertNumber(donaters_ini[Player].money))
 					end
 					lua_thread.create(function() 
 						for i = 0, tonumber(donatersRating_ini[PlayerCount].count + 1) do
@@ -1447,14 +1371,14 @@ function sampev.onServerMessage(color, text)
 						}
 					}, directTodayDonaters)
 					if settings_ini.Settings.TodayDonatersNotify then
-						sampAddChatMessage(u8:decode(prefix .. "Сумма пожертвований за сегодня от {40E0D0}" .. donater.nick .. "{FFFFFF} составляет: {40E0D0}" .. convertNumber(todayDonaters_ini[todayPlayer].money)), main_color)
+						script.sendMessage("Сумма пожертвований за сегодня от {40E0D0}" .. donater.nick .. "{FFFFFF} составляет: {40E0D0}" .. convertNumber(todayDonaters_ini[todayPlayer].money))
 					end
 					todayTopDonaters_ini[todayTopPlayers].count = todayTopDonaters_ini[todayTopPlayers].count + 1
 					inicfg.save(todayTopDonaters_ini, directTodayTopDonaters)
 				else
 					todayDonaters_ini[todayPlayer].money = todayDonaters_ini[todayPlayer].money + donater.money
 					if settings_ini.Settings.TodayDonatersNotify then
-						sampAddChatMessage(u8:decode(prefix .. "Сумма пожертвований за сегодня от {40E0D0}" .. donater.nick .. "{FFFFFF} составляет: {40E0D0}" .. convertNumber(todayDonaters_ini[todayPlayer].money)), main_color)
+						script.sendMessage("Сумма пожертвований за сегодня от {40E0D0}" .. donater.nick .. "{FFFFFF} составляет: {40E0D0}" .. convertNumber(todayDonaters_ini[todayPlayer].money))
 					end
 				end
 				inicfg.save(todayDonaters_ini, directTodayDonaters)
@@ -1531,7 +1455,7 @@ function sampev.onSendCommand(cmd)
 		if args[2] and isNumber(args[2]) and tonumber(args[2]) >= 0 and tonumber(args[2]) < 1000 and math.fmod(tonumber(args[2]), 1) == 0 and sampIsPlayerConnected(args[2]) then
 			donatik.sendDonaterInfo(sampGetPlayerNickname(args[2]))
 		else
-			sampAddChatMessage(prefix .. u8:decode"Ошибка", main_color)
+			script.sendMessage("Ошибка")
 		end
 	end
 	if args[1] == '/donater' then
@@ -1539,23 +1463,23 @@ function sampev.onSendCommand(cmd)
 			if args[3] == nil then
 				Player = string.format('%s', args[2])
 				if donaters_ini[Player] == nil then
-					sampAddChatMessage(u8:decode(prefix .. "{40E0D0}" .. args[2] .. " {FFFFFF}в базе данных не обнаружен"), main_color)
+					script.sendMessage("{40E0D0}" .. args[2] .. " {FFFFFF}в базе данных не обнаружен")
 				else
 					if donatik.getDonaterZielPlace(donaters_ini[Player].nick) ~= nil then
-						sampAddChatMessage(u8:decode(prefix .. donaters_ini[Player].gender .. " {40E0D0}" .. donaters_ini[Player].nick .. " {FFFFFF}находится на " .. donatik.getDonaterPlace(donaters_ini[Player].nick) .. " месте в списке за все время"), main_color)
-						sampAddChatMessage(u8:decode(prefix .. "и на " .. donatik.getDonaterZielPlace(donaters_ini[Player].nick) .. " в списке на цель {40E0D0}\"" .. statistics_ini[DonateMoney].zielName .. "\""), main_color)
+						script.sendMessage(donaters_ini[Player].gender .. " {40E0D0}" .. donaters_ini[Player].nick .. " {FFFFFF}находится на " .. donatik.getDonaterPlace(donaters_ini[Player].nick) .. " месте в списке за все время")
+						script.sendMessage("и на " .. donatik.getDonaterZielPlace(donaters_ini[Player].nick) .. " в списке на цель {40E0D0}\"" .. statistics_ini[DonateMoney].zielName .. "\"")
 					else
-						sampAddChatMessage(u8:decode(prefix .. donaters_ini[Player].gender .. " {40E0D0}" .. donaters_ini[Player].nick .. " {FFFFFF}находится на " .. donatik.getDonaterPlace(donaters_ini[Player].nick) .. " {FFFFFF}месте в списке за все время"), main_color)
+						script.sendMessage(donaters_ini[Player].gender .. " {40E0D0}" .. donaters_ini[Player].nick .. " {FFFFFF}находится на " .. donatik.getDonaterPlace(donaters_ini[Player].nick) .. " {FFFFFF}месте в списке за все время")
 					end
-					sampAddChatMessage(prefix .. u8:decode"Сумма пожертвований за все время составляет: {40E0D0}" .. convertNumber(donaters_ini[Player].money), main_color)
+					script.sendMessage("Сумма пожертвований за все время составляет: {40E0D0}" .. convertNumber(donaters_ini[Player].money))
 					if donatersZiel_ini[Player] ~= nil then
-						sampAddChatMessage(u8:decode(prefix .. "На цель {40E0D0}\"" .. statistics_ini[DonateMoney].zielName .. "\"{FFFFFF} составляет: {40E0D0}" .. convertNumber(donatersZiel_ini[Player].money)), main_color)
+						script.sendMessage("На цель {40E0D0}\"" .. statistics_ini[DonateMoney].zielName .. "\"{FFFFFF} составляет: {40E0D0}" .. convertNumber(donatersZiel_ini[Player].money))
 					end
 					todayPlayerNickName = string.format('%s-%s-%s-%s', my_day, my_month, my_year, args[2])
 					if todayDonaters_ini[todayPlayerNickName] == nil then
-						sampAddChatMessage(prefix .. u8:decode"Сегодня пожертвований не было", main_color)
+						script.sendMessage("Сегодня пожертвований не было")
 					else
-						sampAddChatMessage(prefix .. u8:decode"За сегодня составляет: {40E0D0}" .. convertNumber(todayDonaters_ini[todayPlayerNickName].money), main_color)
+						script.sendMessage("За сегодня составляет: {40E0D0}" .. convertNumber(todayDonaters_ini[todayPlayerNickName].money))
 					end
 				end
 			elseif args[3] ~= nil and args[3] ~= "" and isNumber(args[3]) and math.fmod(tonumber(args[3]), 1) == 0 then
@@ -1573,7 +1497,7 @@ function sampev.onSendCommand(cmd)
 				
 				if donaters_ini[playerNickName] ~= nil then
 					donaters_ini[playerNickName].money = donaters_ini[playerNickName].money + args[3]
-					sampAddChatMessage(u8:decode(prefix .. "Сумма пожертвований от {40E0D0}" .. args[2] .. "{FFFFFF} составляет: {40E0D0}" .. convertNumber(donaters_ini[playerNickName].money)), main_color)
+					script.sendMessage("Сумма пожертвований от {40E0D0}" .. args[2] .. "{FFFFFF} составляет: {40E0D0}" .. convertNumber(donaters_ini[playerNickName].money))
 					for i = 1, tonumber(donatersRating_ini[PlayerCount].count) do
 						if donatersRating_ini[i] ~= nil then
 							if donatersRating_ini[i].nick == args[2] then
@@ -1594,8 +1518,8 @@ function sampev.onSendCommand(cmd)
 							sms    = false
 						}
 					}, directDonaters)
-					sampAddChatMessage(u8:decode(prefix .. "Господин {40E0D0}" .. args[2] .. "{FFFFFF} был добавлен в базу данных"), main_color)
-					sampAddChatMessage(u8:decode(prefix .. "Сумма пожертвований за все время от {40E0D0}" .. args[2] .. "{FFFFFF} составляет: {40E0D0}" .. convertNumber(args[3])), main_color)
+					script.sendMessage("Господин {40E0D0}" .. args[2] .. "{FFFFFF} был добавлен в базу данных")
+					script.sendMessage("Сумма пожертвований за все время от {40E0D0}" .. args[2] .. "{FFFFFF} составляет: {40E0D0}" .. convertNumber(args[3]))
 					
 					PlayerRating = string.format('%d', donatersRating_ini[PlayerCount].count + 1)
 					if donatersRating_ini[PlayerRating] == nil then
@@ -1659,10 +1583,10 @@ function sampev.onSendCommand(cmd)
 					}, directTodayDonaters)
 					todayTopDonaters_ini[todayTopPlayers].count = todayTopDonaters_ini[todayTopPlayers].count + 1
 					inicfg.save(todayTopDonaters_ini, directTodayTopDonaters)
-					sampAddChatMessage(u8:decode(prefix .. "Сумма пожертвований за сегодня от {40E0D0}" .. args[2] .. "{FFFFFF} составляет: {40E0D0}" .. convertNumber(todayDonaters_ini[todayPlayerNickName].money)), main_color)
+					script.sendMessage("Сумма пожертвований за сегодня от {40E0D0}" .. args[2] .. "{FFFFFF} составляет: {40E0D0}" .. convertNumber(todayDonaters_ini[todayPlayerNickName].money))
 				else
 					todayDonaters_ini[todayPlayerNickName].money = todayDonaters_ini[todayPlayerNickName].money + args[3]
-					sampAddChatMessage(u8:decode(prefix .. "Сумма пожертвований за сегодня от {40E0D0}" .. args[2] .. "{FFFFFF} составляет: {40E0D0}" .. convertNumber(todayDonaters_ini[todayPlayerNickName].money)), main_color)
+					script.sendMessage("Сумма пожертвований за сегодня от {40E0D0}" .. args[2] .. "{FFFFFF} составляет: {40E0D0}" .. convertNumber(todayDonaters_ini[todayPlayerNickName].money))
 				end
 				inicfg.save(todayDonaters_ini, directTodayDonaters)
 				
@@ -1754,7 +1678,7 @@ function sampev.onSendCommand(cmd)
 				percent = tonumber(statistics_ziel_ini[DonateMoneyZiel].money)/tonumber(statistics_ziel_ini[DonateMoneyZiel].target)
 				
 			else
-				sampAddChatMessage(prefix .. u8:decode"Ошибка.", main_color)
+				script.sendMessage("Ошибка.")
 			end
 		end
 	end
@@ -1764,7 +1688,7 @@ function sampev.onSendCommand(cmd)
 				statistics_ini[DonateMoney].zielName = args[2]
 				statistics_ini[DonateMoney].target = args[3]
 				inicfg.save(statistics_ini, directStatistics)
-				sampAddChatMessage(u8:decode(prefix .. "Новая цель: {40E0D0}" .. args[2] .. "{FFFFFF} с суммой {40E0D0}" .. args[3]), main_color)
+				script.sendMessage("Новая цель: {40E0D0}" .. args[2] .. "{FFFFFF} с суммой {40E0D0}" .. args[3])
 				script.reload = true
 				thisScript():reload()
 			end
@@ -1778,7 +1702,7 @@ function sampev.onSendChat(message)
 end
 
 function imgui.OnDrawFrame()
-	if statistics_ini[DonateMoney].hud and scriptLoaded then
+	if statistics_ini[DonateMoney].hud and script.loaded then
 		if buffering_bar_position_fixed then
 			imgui.SetNextWindowPos(imgui.ImVec2(settings_ini.Settings.x, settings_ini.Settings.y))
 		end
@@ -1795,7 +1719,7 @@ function imgui.OnDrawFrame()
 		imgui.bufferingBar(percent, vec(83, 8), false)
 		imgui.End()
 	end
-	if main_window_state.v and scriptLoaded then
+	if main_window_state.v and script.loaded then
 		imgui.ShowCursor = true
 		imgui.SetNextWindowPos(imgui.ImVec2(sw / 2, sh / 2), imgui.Cond.FirstUseEver, imgui.ImVec2(0.5, 0.5))
 		imgui.SetNextWindowSize(vec(436, 225), imgui.Cond.FirstUseEver)
@@ -1891,7 +1815,7 @@ function imgui.OnDrawFrame()
 				if text_buffer_nick.v ~= nil and text_buffer_nick.v ~= "" and text_buffer_summa.v ~= nil and text_buffer_summa.v ~= "" and isNumber(text_buffer_summa.v) and math.fmod(tonumber(text_buffer_summa.v), 1) == 0 then
 					sampSendChat("/donater " .. text_buffer_nick.v .. " " .. text_buffer_summa.v)
 				else
-					sampAddChatMessage(prefix .. u8:decode"Ошибка. Введите в первое поле ник игрока, во второе сумму", main_color)
+					script.sendMessage("Ошибка. Введите в первое поле ник игрока, во второе сумму")
 				end
 			end
 			imgui.PushItemWidth(toScreenX(116))
@@ -1920,7 +1844,7 @@ function imgui.OnDrawFrame()
 				if text_buffer_name.v ~= nil and text_buffer_name.v ~= "" and text_buffer_target.v ~= nil and text_buffer_target.v ~= "" and isNumber(text_buffer_target.v) and math.fmod(tonumber(text_buffer_target.v), 1) == 0 then
 					sampSendChat("/dziel " .. text_buffer_name.v .. " " .. text_buffer_target.v)
 				else
-					sampAddChatMessage(prefix .. u8:decode"Ошибка. Введите в первое поле название цели, во второе сумму", main_color)
+					script.sendMessage("Ошибка. Введите в первое поле название цели, во второе сумму")
 				end
 			end
 			if imgui.IsItemHovered() then
@@ -2453,7 +2377,7 @@ function imgui.OnDrawFrame()
 				end
 			else
 				if imgui.Button("Актуальная версия скрипта", vec(175, 18)) then
-					sampAddChatMessage(prefix .. u8:decode("Обновление не требуется"), main_color)
+					script.sendMessage(("Обновление не требуется"))
 				end
 			end
 			imgui.SameLine()
@@ -2499,7 +2423,7 @@ function imgui.OnDrawFrame()
 			end
 			if not found then
 				if imgui.Button("bier сейчас не в сети", vec(175, 18)) then
-					sampAddChatMessage(prefix .. u8:decode"bier играет на Revolution (сейчас не онлайн)", main_color)
+					script.sendMessage("bier играет на Revolution (сейчас не онлайн)")
 				end
 				if imgui.IsItemHovered() then
 					imgui.BeginTooltip()
@@ -2529,7 +2453,7 @@ function imgui.OnDrawFrame()
 			if imgui.Button("Токен", vec(48.25, 10)) then
 				settings_ini.Telegram.token = text_buffer_token.v
 				inicfg.save(settings_ini, directSettings)
-				sampAddChatMessage(u8:decode(prefix .. "Токен сохранен, перезагрузите скрипт"), main_color)
+				script.sendMessage("Токен сохранен, перезагрузите скрипт")
 			end
 			imgui.SameLine()
 			imgui.PushItemWidth(toScreenX(125))
@@ -2539,7 +2463,7 @@ function imgui.OnDrawFrame()
 			if imgui.Button("Чат айди", vec(48.25, 10)) then
 				settings_ini.Telegram.chat_id = text_buffer_chat_id.v
 				inicfg.save(settings_ini, directSettings)
-				sampAddChatMessage(u8:decode(prefix .. "Чат айди сохранен, перезагрузите скрипт"), main_color)
+				script.sendMessage("Чат айди сохранен, перезагрузите скрипт")
 			end
 			imgui.SameLine()
 			imgui.PushItemWidth(toScreenX(125))
@@ -3228,9 +3152,9 @@ function tg.processingMessages(result)
 							if text == "/showDonations " then
 								settings_ini.Telegram.bool = not settings_ini.Telegram.bool
 								if settings_ini.Telegram.bool then 
-									sampAddChatMessage(prefix .. u8:decode"Пожертвования транслируются в чат бота", main_color)
+									script.sendMessage("Пожертвования транслируются в чат бота")
 								else
-									sampAddChatMessage(prefix .. u8:decode"Пожертвования больше не транслируются в чат бота", main_color)
+									script.sendMessage("Пожертвования больше не транслируются в чат бота")
 								end
 								inicfg.save(settings_ini, directSettings)
 							elseif text == "/showdonaters " then
@@ -3381,7 +3305,7 @@ function tg.sendPhoto(caption)
 				},
 				tostring(settings_ini.Telegram.token))
 			if not res then
-				sampAddChatMessage(prefix.."tg.sendPhoto error: " .. err, main_color)
+				script.sendErrorMessage("tg.sendPhoto error: " .. err)
 			end
 				
 			--[[local result, response = tg.request(
@@ -3398,7 +3322,7 @@ function tg.sendPhoto(caption)
 			)]]
 		end)
 	else
-		sampAddChatMessage(prefix .. u8:decode("Библиотека не обнаружена!"), main_color)
+		script.sendErrorMessage("Библиотека не обнаружена!")
 	end
 end
 
@@ -3533,7 +3457,7 @@ function checkUpdates()
 					file:close()
 					os.remove(fpath)
 					if info['version_num'] > thisScript()['version_num'] then
-						sampAddChatMessage(prefix .. u8:decode'Доступна новая версия скрипта! /dhud > Информация > Обновить скрипт', main_color)
+						script.sendMessage('Доступна новая версия скрипта! /dhud > Информация > Обновить скрипт')
 						script.update = true
 					return true
 					end
@@ -3546,7 +3470,7 @@ end
 function updateScript()
 	downloadUrlToFile("https://raw.githubusercontent.com/Vlaek/Donatik/master/Donatik.lua", thisScript().path, function(_, status, _, _)
 		if status == 6 then
-			sampAddChatMessage(prefix .. u8:decode'Скрипт обновлён!', main_color)
+			script.sendMessage('Скрипт обновлён!')
 			thisScript():reload()
 		end
 	end)
@@ -3564,12 +3488,12 @@ function onScriptTerminate(LuaScript, quitGame)
 		imgui.Process = false
 		if not script.reload then
 			if not script.update then 
-				sampAddChatMessage(prefix .. u8:decode"Скрипт крашнулся!", main_color) 
+				script.sendErrorMessage("Скрипт прекратил свою работу!") 
 			else
-				sampAddChatMessage(prefix .. u8:decode"Старый скрипт был выгружен, загружаю обновлённую версию...", main_color) 
+				script.sendMessage("Старый скрипт был выгружен, загружаю обновлённую версию...") 
 			end
 		else
-			sampAddChatMessage(prefix .. u8:decode"Скрипт перезагружается!", main_color)
+			script.sendMessage("Скрипт перезагружается!")
 		end
 	end
 end	
