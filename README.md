@@ -7,6 +7,7 @@
 - [CLEO 4](https://cleo.li)
 - [SAMPFUNCS v5.4.1](https://www.blast.hk/threads/17/)
 - [Moonloader v026.5](https://www.blast.hk/threads/13305/)
+- [Screenshot.asi](https://www.blast.hk/threads/46045/)
   
 ## Установка
 - Установить зависимости из пункта выше
