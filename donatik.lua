@@ -1,4 +1,4 @@
-script_name("Donatik")
+script_name("donatik")
 script_author("bier from Revolution")
 script_version("24.01.2023")
 script_version_number(25)
@@ -27,7 +27,7 @@ try(function()
 		wm 			= require 'lib.windows.message'
 		screenshotIsAvailable, screenshot = pcall(require, 'lib.screenshot')
 		as_action = require 'moonloader'.audiostream_state
-		themes = import 'imgui_themes.lua'
+		themes = import 'donatik_themes.lua'
 		encoding  		 = require 'encoding'
 		encoding.default = 'CP1251'
 		u8               = encoding.UTF8
