@@ -1,7 +1,7 @@
-script_name("donatik")
+script_name("Donatik")
 script_author("bier from Revolution")
-script_version("24.01.2023")
-script_version_number(25)
+script_version("25.01.2023")
+script_version_number(26)
 script_url("https://vlaek.github.io/Donatik/")
 script = {update = false, loaded = false, reload = false}
 
@@ -27,7 +27,6 @@ try(function()
 		wm 			= require 'lib.windows.message'
 		screenshotIsAvailable, screenshot = pcall(require, 'lib.screenshot')
 		as_action = require 'moonloader'.audiostream_state
-		themes = import 'donatik_themes.lua'
 		encoding  		 = require 'encoding'
 		encoding.default = 'CP1251'
 		u8               = encoding.UTF8
@@ -402,6 +401,13 @@ local servers = {
 		"Sedona",
 		"Holiday",
 		"Wednesday"
+	},
+	Advance = {
+		"Red",
+		"Green",
+		"Blue",
+		"Lime",
+		"Chocolate"
 	}
 }
 
@@ -410,8 +416,8 @@ function main()
     while not isSampAvailable() do wait(0) end
     repeat wait(0) until sampGetCurrentServerName() ~= "SA-MP"
 	local serverName = sampGetCurrentServerName()
-	project = (serverName:find('Samp%-Rp.Ru') and 'SRP' or (serverName:find('Evolve') and 'Evolve' or (serverName:find('Arizona') and 'Arizona' or '')))
-	if project == '' then script.sendMessage("Сервер не поддерживается") thisScript():unload() return false end
+	project = (serverName:find('Samp%-Rp.Ru') and 'SRP' or (serverName:find('Evolve') and 'Evolve' or (serverName:find('Arizona') and 'Arizona' or (serverName:find('Advance') and 'Advance' or ''))))
+	if project == '' then script.sendErrorMessage("Сервер " .. serverName .. " не поддерживается") thisScript():unload() return false end
 	server = ''
 	for k, v in pairs(servers[project]) do
 		if k ~= nil then
@@ -450,10 +456,10 @@ function main()
 	sampRegisterChatCommand("todayDonateMoney", donatik.sendTodayDonateMoney)	-- заработанный деньги за сегодня
 	sampRegisterChatCommand("DonateMoney", 		donatik.sendDonateMoney)		-- заработанные деньги за все время
 	sampRegisterChatCommand("DonateMoneyZiel", 	donatik.sendDonateMoneyZiel)	-- заработанные деньги на цель за все время
-	sampRegisterChatCommand("dHudik", 			donatik.hud)					-- полоска худа
+	sampRegisterChatCommand("dHud", 			donatik.hud)					-- полоска худа
 	sampRegisterChatCommand("dtop", 			donatik.sendTopToN) 			-- топ донатеров до N
 	sampRegisterChatCommand("dtopZiel", 		donatik.sendTopZielToN)			-- топ донатеров на цель до N
-	sampRegisterChatCommand('dHud', 
+	sampRegisterChatCommand('dMenu', 
 		function() 
 			main_window_state.v = not main_window_state.v 
 			imgui.Process = main_window_state.v 
@@ -1172,6 +1178,14 @@ local MESSAGES = {
 		PAY			= u8:decode"^.+ передал%(а%) вам %$.+$",
 		PAY_MONEY  	= u8:decode"передал%(а%) вам %$(%d+)$",
 		PAY_NICK  	= u8:decode"(.+) передал%(а%) вам",
+		BANK 		= u8:decode"^ Вам поступил перевод на ваш счет в размере %$.+ от жителя .+%(",
+		BANK_MONEY 	= u8:decode"^ Вам поступил перевод на ваш счет в размере %$(%d+)",
+		BANK_NICK 	= u8:decode"от жителя (.+)%("
+	},
+	Advance = {
+		PAY 		= u8:decode".+%[%d+%] передал Вам %d+%$",
+		PAY_MONEY  	= u8:decode"передал Вам (%d+)%$",
+		PAY_NICK  	= u8:decode"(.+)%[%d+%] передал Вам",
 		BANK 		= u8:decode"^ Вам поступил перевод на ваш счет в размере %$.+ от жителя .+%(",
 		BANK_MONEY 	= u8:decode"^ Вам поступил перевод на ваш счет в размере %$(%d+)",
 		BANK_NICK 	= u8:decode"от жителя (.+)%("
@@ -2323,14 +2337,6 @@ function imgui.OnDrawFrame()
 										if imgui.Button("Вывести информацию о донатере", vec(163, 0)) then	
 											donatik.sendDonaterInfo(donaterNick)
 										end
-										--if not donaters_ini[donaterNick].sms then
-										--	if imgui.Button("Отправить сообщение", vec(163, 0)) then	
-										--		chatManager.addMessageToQueue("/sms " .. id .. " Привет, ты попал в список донатеров в видео на ютуб!", false)
-										--		chatManager.addMessageToQueue("/sms " .. id .. " Видео называется: SAMP RP Revolution 2022 - Благодарность работягам №3", false)
-										--		donaters_ini[donaterNick].sms = true
-										--		inicfg.save(donaters_ini, directDonaters)
-										--	end
-										--end
 										imgui.PopTextWrapPos()
 										imgui.Separator()
 									end
@@ -2477,24 +2483,6 @@ function imgui.OnDrawFrame()
 			
 			imgui.SetCursorPos(vec(180, 65))
 			imgui.RoundDiagram(gendersDiagram, 120, 360, 525)
-			--[[
-			imgui.TextColoredRGB(u8:decode"  {40E0D0}/dhud {FFFFFF}- включить главное меню скрипта")
-			imgui.TextColoredRGB(u8:decode"  {40E0D0}/dhudik {FFFFFF}- включить Donatik HUD")
-			imgui.TextColoredRGB(u8:decode"  {40E0D0}/donater [Ник игрока] [Количество денег] {FFFFFF}- добавить донатера")
-			imgui.TextColoredRGB(u8:decode"  {40E0D0}/donater [Ник игрока] {FFFFFF}- вывести информацию о игроке (только себе)")
-			imgui.TextColoredRGB(u8:decode"  {40E0D0}/dziel [Название цели] [Количество денег] {FFFFFF}- установить цель сбора")
-			imgui.TextColoredRGB(u8:decode"  {40E0D0}/donaters {FFFFFF}- вывести список донатеров за сегодня")
-			imgui.TextColoredRGB(u8:decode"  {40E0D0}/topdonaters {FFFFFF}- вывести список топ донатеров за все время")
-			imgui.TextColoredRGB(u8:decode"  {40E0D0}/topdonatersZiel {FFFFFF}- вывести топ донатеров за все время для цели")
-			imgui.TextColoredRGB(u8:decode"  {40E0D0}/todaydonateMoney {FFFFFF}- вывести накопленные деньги за сегодня")
-			imgui.TextColoredRGB(u8:decode"  {40E0D0}/donatemoney {FFFFFF}- вывести накопленные деньги за все время")
-			imgui.TextColoredRGB(u8:decode"  {40E0D0}/donatemoneyziel {FFFFFF}- вывести накопленные деньги для текущей цели")
-			imgui.TextColoredRGB(u8:decode"  {40E0D0}/donatername [Ник игрока] {FFFFFF}- вывести в общий чат информацию о игроке")
-			imgui.TextColoredRGB(u8:decode"  {40E0D0}/donaterid [id игрока] {FFFFFF}- вывести в общий чат информацию о игроке")
-			imgui.TextColoredRGB(u8:decode"  {40E0D0}/dtop [N] {FFFFFF}- вывести в общий чат N-список донатеров")
-			imgui.TextColoredRGB(u8:decode"  {40E0D0}/dtopZiel [N] {FFFFFF}- вывести в общий чат N-список донатеров для текущей цели")
-			
-			]]
 			
 		elseif tab.v == 6 then
 			if imgui.ColorEdit4("Text", color_text) then 
@@ -2816,8 +2804,8 @@ function imgui.initBuffers()
 	color_checkmark     = imgui.ImFloat4(settings_ini.MyStyle.CheckMark_R, settings_ini.MyStyle.CheckMark_G, settings_ini.MyStyle.CheckMark_B, settings_ini.MyStyle.CheckMark_A)
 end
 
-function imgui.updateMyStyle(themaId)
-	themes.SwitchColorTheme(themaId, settings_ini.MyStyle.Text_R, settings_ini.MyStyle.Text_G, settings_ini.MyStyle.Text_B, settings_ini.MyStyle.Text_A,
+function imgui.updateMyStyle(themeId)
+	imgui.SwitchColorTheme(themeId, settings_ini.MyStyle.Text_R, settings_ini.MyStyle.Text_G, settings_ini.MyStyle.Text_B, settings_ini.MyStyle.Text_A,
 		settings_ini.MyStyle.Button_R, settings_ini.MyStyle.Button_G, settings_ini.MyStyle.Button_B, settings_ini.MyStyle.Button_A,
 		settings_ini.MyStyle.ButtonActive_R, settings_ini.MyStyle.ButtonActive_G, settings_ini.MyStyle.ButtonActive_B, settings_ini.MyStyle.ButtonActive_A,
 		settings_ini.MyStyle.FrameBg_R, settings_ini.MyStyle.FrameBg_G, settings_ini.MyStyle.FrameBg_B, settings_ini.MyStyle.FrameBg_A,
@@ -2826,6 +2814,431 @@ function imgui.updateMyStyle(themaId)
 		settings_ini.MyStyle.Separator_R, settings_ini.MyStyle.Separator_G, settings_ini.MyStyle.Separator_B, settings_ini.MyStyle.Separator_A,
 		settings_ini.MyStyle.CheckMark_R, settings_ini.MyStyle.CheckMark_G, settings_ini.MyStyle.CheckMark_B, settings_ini.MyStyle.CheckMark_A,
 		settings_ini.MyStyle.WindowBg_R, settings_ini.MyStyle.WindowBg_G, settings_ini.MyStyle.WindowBg_B, settings_ini.MyStyle.WindowBg_A)
+end
+
+function imgui.SwitchColorTheme(theme, 
+		Text_R, Text_G, Text_B, Text_A,
+		Button_R, Button_G, Button_B, Button_A,
+		ButtonActive_R, ButtonActive_G, ButtonActive_B, ButtonActive_A,
+		FrameBg_R, FrameBg_G, FrameBg_B, FrameBg_A,
+		FrameBgHovered_R, FrameBgHovered_G, FrameBgHovered_B, FrameBgHovered_A,
+		Title_R, Title_G, Title_B, Title_A,
+		Separator_R, Separator_G, Separator_B, Separator_A,
+		CheckMark_R, CheckMark_G, CheckMark_B, CheckMark_A,
+		WindowBg_R, WindowBg_G, WindowBg_B, WindowBg_A)
+
+	local style = imgui.GetStyle()
+	local colors = style.Colors
+	local clr = imgui.Col
+	local ImVec4 = imgui.ImVec4
+
+	style.WindowRounding = toScreenX(2.0)
+	style.WindowTitleAlign = imgui.ImVec2(0.5, 0.84)
+	style.ChildWindowRounding = toScreenX(2.0)
+	style.FrameRounding = toScreenX(2.0)
+	style.ScrollbarSize = toScreenX(4.3)
+	style.ScrollbarRounding = toScreenX(0)
+	style.GrabMinSize = toScreenX(8.0)
+	style.GrabRounding = toScreenX(1.0)
+	style.FramePadding = vec(1,1)
+	style.ItemSpacing = vec(2,2)
+	style.ItemInnerSpacing = vec(2, 2)
+	style.IndentSpacing = toScreenX(0)
+
+	if theme == 0 or theme == nil then -- Коричневая
+		colors[clr.FrameBg]                = ImVec4(0.48, 0.23, 0.16, 0.25)
+		colors[clr.FrameBgHovered]         = ImVec4(0.98, 0.43, 0.26, 0.40)
+		colors[clr.FrameBgActive]          = ImVec4(0.98, 0.43, 0.26, 0.67)
+		colors[clr.TitleBg]                = ImVec4(0.48, 0.23, 0.16, 1.00)
+		colors[clr.TitleBgActive]          = ImVec4(0.48, 0.23, 0.16, 1.00)
+		colors[clr.TitleBgCollapsed]       = ImVec4(0.0, 0.00, 0.00, 0.75)
+		colors[clr.CheckMark]              = ImVec4(0.98, 0.43, 0.26, 1.00)
+		colors[clr.SliderGrab]             = ImVec4(0.88, 0.39, 0.24, 1.00)
+		colors[clr.SliderGrabActive]       = ImVec4(0.98, 0.43, 0.26, 1.00)
+		colors[clr.Button]                 = ImVec4(0.98, 0.43, 0.26, 0.40)
+		colors[clr.ButtonHovered]          = ImVec4(0.98, 0.43, 0.26, 1.00)
+		colors[clr.ButtonActive]           = ImVec4(0.98, 0.28, 0.06, 1.00)
+		colors[clr.Header]                 = ImVec4(0.98, 0.43, 0.26, 0.31)
+		colors[clr.HeaderHovered]          = ImVec4(0.98, 0.43, 0.26, 0.80)
+		colors[clr.HeaderActive]           = ImVec4(0.98, 0.43, 0.26, 1.00)
+		colors[clr.Separator]              = colors[clr.Border]
+		colors[clr.SeparatorHovered]       = ImVec4(0.75, 0.25, 0.10, 0.78)
+		colors[clr.SeparatorActive]        = ImVec4(0.75, 0.25, 0.10, 1.00)
+		colors[clr.ResizeGrip]             = ImVec4(0.98, 0.43, 0.26, 0.25)
+		colors[clr.ResizeGripHovered]      = ImVec4(0.98, 0.43, 0.26, 0.67)
+		colors[clr.ResizeGripActive]       = ImVec4(0.98, 0.43, 0.26, 0.95)
+		colors[clr.PlotLines]              = ImVec4(0.61, 0.61, 0.61, 1.00)
+		colors[clr.PlotLinesHovered]       = ImVec4(1.00, 0.50, 0.35, 1.00)
+		colors[clr.TextSelectedBg]         = ImVec4(0.98, 0.43, 0.26, 0.35)
+		colors[clr.Text]                   = ImVec4(1.00, 1.00, 1.00, 1.00) 
+		colors[clr.TextDisabled]           = ImVec4(0.50, 0.50, 0.50, 1.00)
+		colors[clr.WindowBg]               = ImVec4(0.06, 0.06, 0.06, 0.94)
+		colors[clr.ChildWindowBg]          = ImVec4(1.00, 1.00, 1.00, 0.00)
+		colors[clr.PopupBg]                = ImVec4(0.08, 0.08, 0.08, 0.94)
+		colors[clr.ComboBg]                = colors[clr.PopupBg]
+		colors[clr.Border]                 = ImVec4(0.43, 0.43, 0.50, 0.50)
+		colors[clr.BorderShadow]           = ImVec4(0.00, 0.00, 0.00, 0.00)
+		colors[clr.MenuBarBg]              = ImVec4(0.14, 0.14, 0.14, 1.00)
+		colors[clr.ScrollbarBg]            = ImVec4(0.02, 0.02, 0.02, 0.53)
+		colors[clr.ScrollbarGrab]          = ImVec4(0.31, 0.31, 0.31, 1.00)
+		colors[clr.ScrollbarGrabHovered]   = ImVec4(0.41, 0.41, 0.41, 1.00)
+		colors[clr.ScrollbarGrabActive]    = ImVec4(0.51, 0.51, 0.51, 1.00)
+		colors[clr.CloseButton]            = ImVec4(0.41, 0.41, 0.41, 0.50)
+		colors[clr.CloseButtonHovered]     = ImVec4(0.98, 0.39, 0.36, 1.00)
+		colors[clr.CloseButtonActive]      = ImVec4(0.98, 0.39, 0.36, 1.00)
+		colors[clr.PlotHistogram]          = ImVec4(0.90, 0.70, 0.00, 1.00)
+		colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 0.60, 0.00, 1.00)
+		colors[clr.ModalWindowDarkening]   = ImVec4(0.80, 0.80, 0.80, 0.35)
+	elseif theme == 1 then -- Синяя
+		colors[clr.FrameBg]                = ImVec4(0.16, 0.29, 0.48, 0.54)
+		colors[clr.FrameBgHovered]         = ImVec4(0.26, 0.59, 0.98, 0.40)
+		colors[clr.FrameBgActive]          = ImVec4(0.26, 0.59, 0.98, 0.67)
+		colors[clr.TitleBg]                = ImVec4(0.16, 0.29, 0.48, 1.00)
+		colors[clr.TitleBgActive]          = ImVec4(0.16, 0.29, 0.48, 1.00)
+		colors[clr.TitleBgCollapsed]       = ImVec4(0.00, 0.00, 0.00, 0.51)
+		colors[clr.CheckMark]              = ImVec4(0.26, 0.59, 0.98, 1.00)
+		colors[clr.SliderGrab]             = ImVec4(0.24, 0.52, 0.88, 1.00)
+		colors[clr.SliderGrabActive]       = ImVec4(0.26, 0.59, 0.98, 1.00)
+		colors[clr.Button]                 = ImVec4(0.26, 0.59, 0.98, 0.40)
+		colors[clr.ButtonHovered]          = ImVec4(0.26, 0.59, 0.98, 1.00)
+		colors[clr.ButtonActive] 		   = ImVec4(0.06, 0.53, 0.98, 1.00)
+		colors[clr.Header] 				   = ImVec4(0.26, 0.59, 0.98, 0.31)
+		colors[clr.HeaderHovered] 		   = ImVec4(0.26, 0.59, 0.98, 0.80)
+		colors[clr.HeaderActive] 		   = ImVec4(0.26, 0.59, 0.98, 1.00)
+		colors[clr.Separator] 			   = colors[clr.Border]
+		colors[clr.SeparatorHovered]       = ImVec4(0.26, 0.59, 0.98, 0.78)
+		colors[clr.SeparatorActive]        = ImVec4(0.26, 0.59, 0.98, 1.00)
+		colors[clr.ResizeGrip] 			   = ImVec4(0.26, 0.59, 0.98, 0.25)
+		colors[clr.ResizeGripHovered]      = ImVec4(0.26, 0.59, 0.98, 0.67)
+		colors[clr.ResizeGripActive]       = ImVec4(0.26, 0.59, 0.98, 0.95)
+		colors[clr.PlotLines] 			   = ImVec4(0.61, 0.61, 0.61, 1.00)
+		colors[clr.PlotLinesHovered]       = ImVec4(1.00, 0.43, 0.35, 1.00)
+		colors[clr.TextSelectedBg] 		   = ImVec4(0.26, 0.59, 0.98, 0.35)
+		colors[clr.Text] 				   = ImVec4(1.00, 1.00, 1.00, 1.00)
+		colors[clr.TextDisabled] 		   = ImVec4(0.50, 0.50, 0.50, 1.00)
+		colors[clr.WindowBg] 			   = ImVec4(0.06, 0.06, 0.06, 0.94)
+		colors[clr.ChildWindowBg] 		   = ImVec4(1.00, 1.00, 1.00, 0.00)
+		colors[clr.PopupBg] 			   = ImVec4(0.08, 0.08, 0.08, 0.94)
+		colors[clr.ComboBg] 			   = colors[clr.PopupBg]
+		colors[clr.Border] 				   = ImVec4(0.43, 0.43, 0.50, 0.50)
+		colors[clr.BorderShadow]           = ImVec4(0.00, 0.00, 0.00, 0.00)
+		colors[clr.MenuBarBg]              = ImVec4(0.14, 0.14, 0.14, 1.00)
+		colors[clr.ScrollbarBg]            = ImVec4(0.02, 0.02, 0.02, 0.53)
+		colors[clr.ScrollbarGrab]          = ImVec4(0.31, 0.31, 0.31, 1.00)
+		colors[clr.ScrollbarGrabHovered]   = ImVec4(0.41, 0.41, 0.41, 1.00)
+		colors[clr.ScrollbarGrabActive]    = ImVec4(0.51, 0.51, 0.51, 1.00)
+		colors[clr.CloseButton]            = ImVec4(0.41, 0.41, 0.41, 0.50)
+		colors[clr.CloseButtonHovered]     = ImVec4(0.98, 0.39, 0.36, 1.00)
+		colors[clr.CloseButtonActive]      = ImVec4(0.98, 0.39, 0.36, 1.00)
+		colors[clr.PlotHistogram] 		   = ImVec4(0.90, 0.70, 0.00, 1.00)
+		colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 0.60, 0.00, 1.00)
+		colors[clr.ModalWindowDarkening]   = ImVec4(0.80, 0.80, 0.80, 0.35)
+	elseif theme == 2 then -- Красная
+		colors[clr.FrameBg]                = ImVec4(0.48, 0.16, 0.16, 0.54)
+		colors[clr.FrameBgHovered]         = ImVec4(0.98, 0.26, 0.26, 0.40)
+		colors[clr.FrameBgActive]          = ImVec4(0.98, 0.26, 0.26, 0.67)
+		colors[clr.TitleBg]                = ImVec4(0.48, 0.16, 0.16, 1.00)
+		colors[clr.TitleBgActive]          = ImVec4(0.48, 0.16, 0.16, 1.00)
+		colors[clr.TitleBgCollapsed]       = ImVec4(0.00, 0.00, 0.00, 0.51)
+		colors[clr.CheckMark]              = ImVec4(0.98, 0.26, 0.26, 1.00)
+		colors[clr.SliderGrab]             = ImVec4(0.88, 0.26, 0.24, 1.00)
+		colors[clr.SliderGrabActive]       = ImVec4(0.98, 0.26, 0.26, 1.00)
+		colors[clr.Button]                 = ImVec4(0.98, 0.26, 0.26, 0.40)
+		colors[clr.ButtonHovered]          = ImVec4(0.98, 0.26, 0.26, 1.00)
+		colors[clr.ButtonActive]           = ImVec4(0.98, 0.06, 0.06, 1.00)
+		colors[clr.Header]                 = ImVec4(0.98, 0.26, 0.26, 0.31)
+		colors[clr.HeaderHovered]          = ImVec4(0.98, 0.26, 0.26, 0.80)
+		colors[clr.HeaderActive]           = ImVec4(0.98, 0.26, 0.26, 1.00)
+		colors[clr.Separator]              = colors[clr.Border]
+		colors[clr.SeparatorHovered]       = ImVec4(0.75, 0.10, 0.10, 0.78)
+		colors[clr.SeparatorActive]        = ImVec4(0.75, 0.10, 0.10, 1.00)
+		colors[clr.ResizeGrip]             = ImVec4(0.98, 0.26, 0.26, 0.25)
+		colors[clr.ResizeGripHovered]      = ImVec4(0.98, 0.26, 0.26, 0.67)
+		colors[clr.ResizeGripActive]       = ImVec4(0.98, 0.26, 0.26, 0.95)
+		colors[clr.TextSelectedBg]         = ImVec4(0.98, 0.26, 0.26, 0.35)
+		colors[clr.Text]                   = ImVec4(1.00, 1.00, 1.00, 1.00)
+		colors[clr.TextDisabled]           = ImVec4(0.50, 0.50, 0.50, 1.00)
+		colors[clr.WindowBg]               = ImVec4(0.06, 0.06, 0.06, 0.94)
+		colors[clr.ChildWindowBg]          = ImVec4(1.00, 1.00, 1.00, 0.00)
+		colors[clr.PopupBg]                = ImVec4(0.08, 0.08, 0.08, 0.94)
+		colors[clr.ComboBg]                = colors[clr.PopupBg]
+		colors[clr.Border]                 = ImVec4(0.43, 0.43, 0.50, 0.50)
+		colors[clr.BorderShadow]           = ImVec4(0.00, 0.00, 0.00, 0.00)
+		colors[clr.MenuBarBg]              = ImVec4(0.14, 0.14, 0.14, 1.00)
+		colors[clr.ScrollbarBg]            = ImVec4(0.02, 0.02, 0.02, 0.53)
+		colors[clr.ScrollbarGrab]          = ImVec4(0.31, 0.31, 0.31, 1.00)
+		colors[clr.ScrollbarGrabHovered]   = ImVec4(0.41, 0.41, 0.41, 1.00)
+		colors[clr.ScrollbarGrabActive]    = ImVec4(0.51, 0.51, 0.51, 1.00)
+		colors[clr.CloseButton]            = ImVec4(0.41, 0.41, 0.41, 0.50)
+		colors[clr.CloseButtonHovered]     = ImVec4(0.98, 0.39, 0.36, 1.00)
+		colors[clr.CloseButtonActive]      = ImVec4(0.98, 0.39, 0.36, 1.00)
+		colors[clr.PlotLines]              = ImVec4(0.61, 0.61, 0.61, 1.00)
+		colors[clr.PlotLinesHovered]       = ImVec4(1.00, 0.43, 0.35, 1.00)
+		colors[clr.PlotHistogram]          = ImVec4(0.90, 0.70, 0.00, 1.00)
+		colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 0.60, 0.00, 1.00)
+		colors[clr.ModalWindowDarkening]   = ImVec4(0.80, 0.80, 0.80, 0.35)
+	elseif theme == 3 then -- Фиолетовая
+		colors[clr.FrameBg]                = ImVec4(0.30, 0.20, 0.39, 1.00)
+		colors[clr.FrameBgHovered]         = ImVec4(0.41, 0.19, 0.63, 0.68)
+		colors[clr.FrameBgActive]          = ImVec4(0.41, 0.19, 0.63, 1.00)
+		colors[clr.TitleBg]                = ImVec4(0.41, 0.19, 0.63, 0.45)
+		colors[clr.TitleBgActive]          = ImVec4(0.41, 0.19, 0.63, 0.78)
+		colors[clr.TitleBgCollapsed]       = ImVec4(0.41, 0.19, 0.63, 0.35)
+		colors[clr.CheckMark]              = ImVec4(0.56, 0.61, 1.00, 1.00)
+		colors[clr.SliderGrab]             = ImVec4(0.56, 0.61, 1.00, 1.00)
+		colors[clr.SliderGrabActive]       = ImVec4(0.56, 0.61, 1.00, 1.00)
+		colors[clr.Button]                 = ImVec4(0.41, 0.19, 0.63, 0.40)
+		colors[clr.ButtonHovered]          = ImVec4(0.41, 0.19, 0.63, 1.00)
+		colors[clr.ButtonActive]           = ImVec4(0.41, 0.33, 0.94, 1.00)
+		colors[clr.Header]                 = ImVec4(0.41, 0.19, 0.63, 0.76)
+		colors[clr.HeaderHovered]          = ImVec4(0.41, 0.19, 0.63, 0.86)
+		colors[clr.HeaderActive]           = ImVec4(0.41, 0.19, 0.63, 1.00)
+		colors[clr.Separator]              = colors[clr.Border]
+		colors[clr.SeparatorHovered]       = ImVec4(0.75, 0.10, 0.10, 0.78)
+		colors[clr.SeparatorActive]        = ImVec4(0.75, 0.10, 0.10, 1.00)
+		colors[clr.ResizeGrip]             = ImVec4(0.41, 0.19, 0.63, 0.20)
+		colors[clr.ResizeGripHovered]      = ImVec4(0.41, 0.19, 0.63, 0.78)
+		colors[clr.ResizeGripActive]       = ImVec4(0.41, 0.19, 0.63, 1.00)
+		colors[clr.TextSelectedBg]         = ImVec4(0.41, 0.19, 0.63, 0.43)
+		colors[clr.Text]                   = ImVec4(1.00, 1.00, 1.00, 1.00)
+		colors[clr.TextDisabled]           = ImVec4(0.50, 0.50, 0.50, 1.00)
+		colors[clr.WindowBg]               = ImVec4(0.06, 0.06, 0.06, 0.94)
+		colors[clr.ChildWindowBg]          = ImVec4(0.30, 0.20, 0.39, 0.00)
+		colors[clr.PopupBg]                = ImVec4(0.08, 0.08, 0.08, 0.94)
+		colors[clr.ComboBg]                = colors[clr.PopupBg]
+		colors[clr.Border]                 = ImVec4(0.89, 0.85, 0.92, 0.30)
+		colors[clr.BorderShadow]           = ImVec4(0.00, 0.00, 0.00, 0.00)
+		colors[clr.MenuBarBg]              = ImVec4(0.30, 0.20, 0.39, 0.57)
+		colors[clr.ScrollbarBg]            = ImVec4(0.02, 0.02, 0.02, 0.53)
+		colors[clr.ScrollbarGrab]          = ImVec4(0.31, 0.31, 0.31, 1.00)
+		colors[clr.ScrollbarGrabHovered]   = ImVec4(0.41, 0.41, 0.41, 1.00)
+		colors[clr.ScrollbarGrabActive]    = ImVec4(0.51, 0.51, 0.51, 1.00)
+		colors[clr.CloseButton]            = ImVec4(0.41, 0.41, 0.41, 0.50)
+		colors[clr.CloseButtonHovered]     = ImVec4(0.98, 0.39, 0.36, 1.00)
+		colors[clr.CloseButtonActive]      = ImVec4(0.98, 0.39, 0.36, 1.00)
+		colors[clr.PlotLines]              = ImVec4(0.89, 0.85, 0.92, 0.63)
+		colors[clr.PlotLinesHovered]       = ImVec4(0.41, 0.19, 0.63, 1.00)
+		colors[clr.PlotHistogram]          = ImVec4(0.89, 0.85, 0.92, 0.63)
+		colors[clr.PlotHistogramHovered]   = ImVec4(0.41, 0.19, 0.63, 1.00)
+		colors[clr.ModalWindowDarkening]   = ImVec4(0.20, 0.20, 0.20, 0.35)
+	elseif theme == 4 then -- Зелёная
+		colors[clr.Text]                   = ImVec4(0.90, 0.90, 0.90, 1.00)
+		colors[clr.TextDisabled]           = ImVec4(0.60, 0.60, 0.60, 1.00)
+		colors[clr.WindowBg]               = ImVec4(0.08, 0.08, 0.08, 1.00)
+		colors[clr.ChildWindowBg]          = ImVec4(0.10, 0.10, 0.10, 1.00)
+		colors[clr.PopupBg]                = ImVec4(0.08, 0.08, 0.08, 1.00)
+		colors[clr.Border]                 = ImVec4(0.70, 0.70, 0.70, 0.40)
+		colors[clr.BorderShadow]           = ImVec4(0.00, 0.00, 0.00, 0.00)
+		colors[clr.FrameBg]                = ImVec4(0.15, 0.15, 0.15, 1.00)
+		colors[clr.FrameBgHovered]         = ImVec4(0.19, 0.19, 0.19, 0.71)
+		colors[clr.FrameBgActive]          = ImVec4(0.34, 0.34, 0.34, 0.79)
+		colors[clr.TitleBg]                = ImVec4(0.00, 0.69, 0.33, 0.80)
+		colors[clr.TitleBgActive]          = ImVec4(0.00, 0.74, 0.36, 1.00)
+		colors[clr.TitleBgCollapsed]       = ImVec4(0.00, 0.69, 0.33, 0.50)
+		colors[clr.MenuBarBg]              = ImVec4(0.00, 0.80, 0.38, 1.00)
+		colors[clr.ScrollbarBg]            = ImVec4(0.16, 0.16, 0.16, 1.00)
+		colors[clr.ScrollbarGrab]          = ImVec4(0.00, 0.69, 0.33, 1.00)
+		colors[clr.ScrollbarGrabHovered]   = ImVec4(0.00, 0.82, 0.39, 1.00)
+		colors[clr.ScrollbarGrabActive]    = ImVec4(0.00, 1.00, 0.48, 1.00)
+		colors[clr.ComboBg]                = ImVec4(0.20, 0.20, 0.20, 0.99)
+		colors[clr.CheckMark]              = ImVec4(0.00, 0.69, 0.33, 1.00)
+		colors[clr.SliderGrab]             = ImVec4(0.00, 0.69, 0.33, 1.00)
+		colors[clr.SliderGrabActive]       = ImVec4(0.00, 0.77, 0.37, 1.00)
+		colors[clr.Button]                 = ImVec4(0.00, 0.69, 0.33, 1.00)
+		colors[clr.ButtonHovered]          = ImVec4(0.00, 0.82, 0.39, 1.00)
+		colors[clr.ButtonActive]           = ImVec4(0.00, 0.87, 0.42, 1.00)
+		colors[clr.Header]                 = ImVec4(0.00, 0.69, 0.33, 1.00)
+		colors[clr.HeaderHovered]          = ImVec4(0.00, 0.76, 0.37, 0.57)
+		colors[clr.HeaderActive]           = ImVec4(0.00, 0.88, 0.42, 0.89)
+		colors[clr.Separator]              = ImVec4(1.00, 1.00, 1.00, 0.40)
+		colors[clr.SeparatorHovered]       = ImVec4(1.00, 1.00, 1.00, 0.60)
+		colors[clr.SeparatorActive]        = ImVec4(1.00, 1.00, 1.00, 0.80)
+		colors[clr.ResizeGrip]             = ImVec4(0.00, 0.69, 0.33, 1.00)
+		colors[clr.ResizeGripHovered]      = ImVec4(0.00, 0.76, 0.37, 1.00)
+		colors[clr.ResizeGripActive]       = ImVec4(0.00, 0.86, 0.41, 1.00)
+		colors[clr.CloseButton]            = ImVec4(0.00, 0.82, 0.39, 1.00)
+		colors[clr.CloseButtonHovered]     = ImVec4(0.00, 0.88, 0.42, 1.00)
+		colors[clr.CloseButtonActive]      = ImVec4(0.00, 1.00, 0.48, 1.00)
+		colors[clr.PlotLines]              = ImVec4(0.00, 0.69, 0.33, 1.00)
+		colors[clr.PlotLinesHovered]       = ImVec4(0.00, 0.74, 0.36, 1.00)
+		colors[clr.PlotHistogram]          = ImVec4(0.00, 0.69, 0.33, 1.00)
+		colors[clr.PlotHistogramHovered]   = ImVec4(0.00, 0.80, 0.38, 1.00)
+		colors[clr.TextSelectedBg]         = ImVec4(0.00, 0.69, 0.33, 0.72)
+		colors[clr.ModalWindowDarkening]   = ImVec4(0.17, 0.17, 0.17, 0.48)
+	elseif theme == 5 then -- Голубая
+		colors[clr.FrameBg]                = ImVec4(0.16, 0.48, 0.42, 0.54)
+		colors[clr.FrameBgHovered]         = ImVec4(0.26, 0.98, 0.85, 0.40)
+		colors[clr.FrameBgActive]          = ImVec4(0.26, 0.98, 0.85, 0.67)
+		colors[clr.TitleBg]                = ImVec4(0.04, 0.04, 0.04, 1.00)
+		colors[clr.TitleBgActive]          = ImVec4(0.16, 0.48, 0.42, 1.00)
+		colors[clr.TitleBgCollapsed]       = ImVec4(0.00, 0.00, 0.00, 0.51)
+		colors[clr.CheckMark]              = ImVec4(0.26, 0.98, 0.85, 1.00)
+		colors[clr.SliderGrab]             = ImVec4(0.24, 0.88, 0.77, 1.00)
+		colors[clr.SliderGrabActive]       = ImVec4(0.26, 0.98, 0.85, 1.00)
+		colors[clr.Button]                 = ImVec4(0.26, 0.98, 0.85, 0.40)
+		colors[clr.ButtonHovered]          = ImVec4(0.26, 0.98, 0.85, 1.00)
+		colors[clr.ButtonActive]           = ImVec4(0.06, 0.98, 0.82, 1.00)
+		colors[clr.Header]                 = ImVec4(0.26, 0.98, 0.85, 0.31)
+		colors[clr.HeaderHovered]          = ImVec4(0.26, 0.98, 0.85, 0.80)
+		colors[clr.HeaderActive]           = ImVec4(0.26, 0.98, 0.85, 1.00)
+		colors[clr.Separator]              = colors[clr.Border]
+		colors[clr.SeparatorHovered]       = ImVec4(0.10, 0.75, 0.63, 0.78)
+		colors[clr.SeparatorActive]        = ImVec4(0.10, 0.75, 0.63, 1.00)
+		colors[clr.ResizeGrip]             = ImVec4(0.26, 0.98, 0.85, 0.25)
+		colors[clr.ResizeGripHovered]      = ImVec4(0.26, 0.98, 0.85, 0.67)
+		colors[clr.ResizeGripActive]       = ImVec4(0.26, 0.98, 0.85, 0.95)
+		colors[clr.PlotLines]              = ImVec4(0.61, 0.61, 0.61, 1.00)
+		colors[clr.PlotLinesHovered]       = ImVec4(1.00, 0.81, 0.35, 1.00)
+		colors[clr.TextSelectedBg]         = ImVec4(0.26, 0.98, 0.85, 0.35)
+		colors[clr.Text]                   = ImVec4(1.00, 1.00, 1.00, 1.00)
+		colors[clr.TextDisabled]           = ImVec4(0.50, 0.50, 0.50, 1.00)
+		colors[clr.WindowBg]               = ImVec4(0.06, 0.06, 0.06, 0.94)
+		colors[clr.ChildWindowBg]          = ImVec4(1.00, 1.00, 1.00, 0.00)
+		colors[clr.PopupBg]                = ImVec4(0.08, 0.08, 0.08, 0.94)
+		colors[clr.ComboBg]                = colors[clr.PopupBg]
+		colors[clr.Border]                 = ImVec4(0.43, 0.43, 0.50, 0.50)
+		colors[clr.BorderShadow]           = ImVec4(0.00, 0.00, 0.00, 0.00)
+		colors[clr.MenuBarBg]              = ImVec4(0.14, 0.14, 0.14, 1.00)
+		colors[clr.ScrollbarBg]            = ImVec4(0.02, 0.02, 0.02, 0.53)
+		colors[clr.ScrollbarGrab]          = ImVec4(0.31, 0.31, 0.31, 1.00)
+		colors[clr.ScrollbarGrabHovered]   = ImVec4(0.41, 0.41, 0.41, 1.00)
+		colors[clr.ScrollbarGrabActive]    = ImVec4(0.51, 0.51, 0.51, 1.00)
+		colors[clr.CloseButton]            = ImVec4(0.41, 0.41, 0.41, 0.50)
+		colors[clr.CloseButtonHovered]     = ImVec4(0.98, 0.39, 0.36, 1.00)
+		colors[clr.CloseButtonActive]      = ImVec4(0.98, 0.39, 0.36, 1.00)
+		colors[clr.PlotHistogram]          = ImVec4(0.90, 0.70, 0.00, 1.00)
+		colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 0.60, 0.00, 1.00)
+		colors[clr.ModalWindowDarkening]   = ImVec4(0.80, 0.80, 0.80, 0.35)
+	elseif theme == 6 then -- Жёлтая
+		colors[clr.FrameBg]                = ImVec4(0.40, 0.40, 0.00, 1.00)
+		colors[clr.FrameBgHovered]         = ImVec4(0.84, 0.68, 0.00, 1.00)
+		colors[clr.FrameBgActive]          = ImVec4(0.92, 0.77, 0.00, 1.00)
+		colors[clr.TitleBg]                = ImVec4(0.92, 0.77, 0.00, 0.85)
+		colors[clr.TitleBgActive]          = ImVec4(0.92, 0.77, 0.00, 0.85)
+		colors[clr.TitleBgCollapsed]       = ImVec4(0.00, 0.00, 0.00, 0.51)
+		colors[clr.CheckMark]              = ImVec4(1.00, 1.00, 1.00, 1.00)
+		colors[clr.SliderGrab]             = ImVec4(0.84, 0.68, 0.00, 1.00)
+		colors[clr.SliderGrabActive]       = ImVec4(0.92, 0.77, 0.00, 1.00)
+		colors[clr.Button]                 = ImVec4(0.76, 0.60, 0.00, 0.85)
+		colors[clr.ButtonHovered]          = ImVec4(0.84, 0.68, 0.00, 1.00)
+		colors[clr.ButtonActive]           = ImVec4(0.92, 0.77, 0.00, 1.00)
+		colors[clr.Header]                 = ImVec4(0.84, 0.68, 0.00, 0.75)
+		colors[clr.HeaderHovered]          = ImVec4(0.84, 0.68, 0.00, 0.90)
+		colors[clr.HeaderActive]           = ImVec4(0.92, 0.77, 0.00, 1.00)
+		colors[clr.Separator]              = colors[clr.Border]
+		colors[clr.SeparatorHovered]       = ImVec4(0.84, 0.68, 0.00, 0.78)
+		colors[clr.SeparatorActive]        = ImVec4(0.84, 0.68, 0.00, 1.00)
+		colors[clr.ResizeGrip]             = ImVec4(0.76, 0.60, 0.00, 0.25)
+		colors[clr.ResizeGripHovered]      = ImVec4(0.84, 0.68, 0.00, 0.67)
+		colors[clr.ResizeGripActive]       = ImVec4(0.92, 0.77, 0.00, 0.95)
+		colors[clr.TextSelectedBg]         = ImVec4(0.52, 0.34, 0.00, 0.85)
+		colors[clr.Text]                   = ImVec4(1.00, 1.00, 1.00, 1.00)
+		colors[clr.TextDisabled]           = ImVec4(0.50, 0.50, 0.50, 1.00)
+		colors[clr.WindowBg]               = ImVec4(0.06, 0.06, 0.06, 0.94)
+		colors[clr.ChildWindowBg]          = ImVec4(1.00, 1.00, 1.00, 0.00)
+		colors[clr.PopupBg]                = ImVec4(0.08, 0.08, 0.08, 0.94)
+		colors[clr.ComboBg]                = colors[clr.PopupBg]
+		colors[clr.Border]                 = ImVec4(0.43, 0.43, 0.50, 0.50)
+		colors[clr.BorderShadow]           = ImVec4(0.00, 0.00, 0.00, 0.00)
+		colors[clr.MenuBarBg]              = ImVec4(0.14, 0.14, 0.14, 1.00)
+		colors[clr.ScrollbarBg]            = ImVec4(0.02, 0.02, 0.02, 0.53)
+		colors[clr.ScrollbarGrab]          = ImVec4(0.31, 0.31, 0.31, 1.00)
+		colors[clr.ScrollbarGrabHovered]   = ImVec4(0.41, 0.41, 0.41, 1.00)
+		colors[clr.ScrollbarGrabActive]    = ImVec4(0.51, 0.51, 0.51, 1.00)
+		colors[clr.CloseButton]            = ImVec4(0.41, 0.41, 0.41, 0.50)
+		colors[clr.CloseButtonHovered]     = ImVec4(0.98, 0.39, 0.36, 1.00)
+		colors[clr.CloseButtonActive]      = ImVec4(0.98, 0.39, 0.36, 1.00)
+		colors[clr.PlotLines]              = ImVec4(0.61, 0.61, 0.61, 1.00)
+		colors[clr.PlotLinesHovered]       = ImVec4(1.00, 0.43, 0.35, 1.00)
+		colors[clr.PlotHistogram]          = ImVec4(0.90, 0.70, 0.00, 1.00)
+		colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 0.60, 0.00, 1.00)
+		colors[clr.ModalWindowDarkening]   = ImVec4(0.80, 0.80, 0.80, 0.35)
+	elseif theme == 7 then -- монохром
+		colors[clr.Text] 				   = ImVec4(0.00, 1.00, 1.00, 1.00)
+		colors[clr.TextDisabled] 		   = ImVec4(0.00, 0.40, 0.41, 1.00)
+		colors[clr.WindowBg] 			   = ImVec4(0.00, 0.00, 0.00, 0.94)
+		colors[clr.ChildWindowBg]		   = ImVec4(0.00, 0.00, 0.00, 0.00)
+		colors[clr.Border] 				   = ImVec4(0.00, 1.00, 1.00, 0.65)
+		colors[clr.BorderShadow] 		   = ImVec4(0.00, 0.00, 0.00, 0.00)
+		colors[clr.FrameBg] 			   = ImVec4(0.44, 0.80, 0.80, 0.18)
+		colors[clr.FrameBgHovered] 		   = ImVec4(0.44, 0.80, 0.80, 0.27)
+		colors[clr.FrameBgActive] 		   = ImVec4(0.44, 0.81, 0.86, 0.66)
+		colors[clr.TitleBg] 			   = ImVec4(0.14, 0.18, 0.21, 0.73)
+		colors[clr.TitleBgCollapsed] 	   = ImVec4(0.00, 0.00, 0.00, 0.54)
+		colors[clr.TitleBgActive]		   = ImVec4(0.14, 0.18, 0.21, 1.00)
+		colors[clr.MenuBarBg] 			   = ImVec4(0.00, 0.00, 0.00, 0.20)
+		colors[clr.ScrollbarBg] 		   = ImVec4(0.22, 0.29, 0.30, 0.71)
+		colors[clr.ScrollbarGrab]		   = ImVec4(0.00, 1.00, 1.00, 0.44)
+		colors[clr.ScrollbarGrabHovered]   = ImVec4(0.00, 1.00, 1.00, 0.74)
+		colors[clr.ScrollbarGrabActive]    = ImVec4(0.00, 1.00, 1.00, 1.00)
+		colors[clr.ComboBg]                = ImVec4(0.16, 0.24, 0.22, 1.00)
+		colors[clr.CheckMark] 			   = ImVec4(0.00, 1.00, 1.00, 0.68)
+		colors[clr.SliderGrab] 			   = ImVec4(0.00, 1.00, 1.00, 0.36)
+		colors[clr.SliderGrabActive]       = ImVec4(0.00, 1.00, 1.00, 0.76)
+		colors[clr.Button] 				   = ImVec4(0.00, 0.65, 0.65, 0.46)
+		colors[clr.ButtonHovered] 	       = ImVec4(0.01, 1.00, 1.00, 0.43)
+		colors[clr.ButtonActive] 		   = ImVec4(0.00, 1.00, 1.00, 0.62)
+		colors[clr.Header]				   = ImVec4(0.00, 1.00, 1.00, 0.33)
+		colors[clr.HeaderHovered] 		   = ImVec4(0.00, 1.00, 1.00, 0.42)
+		colors[clr.HeaderActive] 	       = ImVec4(0.00, 1.00, 1.00, 0.54)
+		colors[clr.ResizeGrip] 			   = ImVec4(0.00, 1.00, 1.00, 0.54)
+		colors[clr.ResizeGripHovered] 	   = ImVec4(0.00, 1.00, 1.00, 0.74)
+		colors[clr.ResizeGripActive]       = ImVec4(0.00, 1.00, 1.00, 1.00)
+		colors[clr.CloseButton]            = ImVec4(0.00, 0.78, 0.78, 0.35)
+		colors[clr.CloseButtonHovered]     = ImVec4(0.00, 0.78, 0.78, 0.47)
+		colors[clr.CloseButtonActive]      = ImVec4(0.00, 0.78, 0.78, 1.00)
+		colors[clr.PlotLines]              = ImVec4(0.00, 1.00, 1.00, 1.00)
+		colors[clr.PlotLinesHovered]       = ImVec4(0.00, 1.00, 1.00, 1.00)
+		colors[clr.PlotHistogram]          = ImVec4(0.00, 1.00, 1.00, 1.00)
+		colors[clr.PlotHistogramHovered]   = ImVec4(0.00, 1.00, 1.00, 1.00)
+		colors[clr.TextSelectedBg]         = ImVec4(0.00, 1.00, 1.00, 0.22)
+		colors[clr.ModalWindowDarkening]   = ImVec4(0.04, 0.10, 0.09, 0.51)
+	elseif theme == 8 then -- Свой стиль
+		colors[clr.Text]                   = ImVec4(Text_R, Text_G, Text_B, Text_A) -- текст
+		colors[clr.TextDisabled]           = ImVec4(1.00, 1.00, 1.00, 1.00)
+		colors[clr.WindowBg]               = ImVec4(WindowBg_R, WindowBg_G, WindowBg_B, WindowBg_A) -- рамка вокруг меню
+		colors[clr.ChildWindowBg]          = ImVec4(1.00, 1.00, 1.00, 0.00) -- фон меню
+		colors[clr.PopupBg]                = ImVec4(0.08, 0.08, 0.08, 0.94) -- фон попап меню (выбор цвета например, подсказки)
+		colors[clr.Border]                 = colors[clr.Separator] -- цвет рамок
+		colors[clr.BorderShadow]           = ImVec4(0.35, 0.35, 0.35, 0.66) -- тень рамок
+		colors[clr.FrameBg]                = ImVec4(FrameBg_R, FrameBg_G, FrameBg_B, FrameBg_A) -- фон (выбор темы, бинды)
+		colors[clr.FrameBgHovered]         = ImVec4(FrameBgHovered_R, FrameBgHovered_G, FrameBgHovered_B, FrameBgHovered_A) -- фон когда наводишь на бинд
+		colors[clr.FrameBgActive]          = ImVec4(FrameBgHovered_R + 0.1, FrameBgHovered_G + 0.1, FrameBgHovered_B + 0.1, FrameBgHovered_A) -- фон когда тыкаешь (почти не видно)
+		colors[clr.TitleBg]                = ImVec4(Title_R, Title_G, Title_B, Title_A - 0.3) -- неактивный заголовок
+		colors[clr.TitleBgActive]          = ImVec4(Title_R, Title_G, Title_B, Title_A) -- активный заголовок
+		colors[clr.TitleBgCollapsed]       = ImVec4(0.00, 0.00, 0.00, 1.00) -- свернутый заголовок (не юзается)
+		colors[clr.MenuBarBg]              = ImVec4(0.00, 0.00, 0.00, 0.80) -- xz (не юзается)
+		colors[clr.ScrollbarBg]            = ImVec4(0.00, 0.00, 0.00, 0.60) -- фон скролла
+		colors[clr.ScrollbarGrab]          = ImVec4(1.00, 1.00, 1.00, 0.87) -- цвет скролла
+		colors[clr.ScrollbarGrabHovered]   = ImVec4(1.00, 1.00, 1.00, 0.79) -- цвет скролла когда на него навели курсором
+		colors[clr.ScrollbarGrabActive]    = ImVec4(0.80, 0.50, 0.50, 0.40) -- цвет скролла когда его зажали
+		colors[clr.ComboBg]                = ImVec4(0.24, 0.24, 0.24, 1.00) -- цвет фона комбо бокса
+		colors[clr.CheckMark]              = ImVec4(CheckMark_R, CheckMark_G, CheckMark_B, CheckMark_A) -- цвет галки на чекбоксе 
+		colors[clr.SliderGrab]             = ImVec4(1.00, 1.00, 1.00, 0.42) -- ползунок (на 2 странице который)
+		colors[clr.SliderGrabActive]       = ImVec4(0.76, 0.76, 0.76, 1.00) -- ползунок активный
+		colors[clr.Button]                 = ImVec4(Button_R, Button_G, Button_B, Button_A) -- кнопка
+		colors[clr.ButtonHovered]          = ImVec4(ButtonActive_R, ButtonActive_G, ButtonActive_B, ButtonActive_A) -- кнопка когда на нее навели
+		colors[clr.ButtonActive]           = ImVec4(ButtonActive_R + 0.1, ButtonActive_G + 0.1, ButtonActive_B + 0.1, ButtonActive_A) -- кнопка когда на нее нажали
+		colors[clr.Header]                 = colors[clr.Button] -- вкладки (+ история донатов)
+		colors[clr.HeaderHovered]          = colors[clr.ButtonHovered] -- вкладки (+ история донатов) когда навели курсор
+		colors[clr.HeaderActive]           = colors[clr.ButtonActive] -- вкладки (+ история донатов) когда нажали
+		colors[clr.Separator]              = ImVec4(Separator_R, Separator_G, Separator_B, Separator_A) -- сепаратор 
+		colors[clr.SeparatorHovered]       = ImVec4(Separator_R + 0.1, Separator_G + 0.1, Separator_B + 0.1, Separator_A) -- сепаратор когда навели
+		colors[clr.SeparatorActive]        = ImVec4(Separator_R + 0.1, Separator_G + 0.1, Separator_B + 0.1, Separator_A) -- сепаратор когда нажали
+		colors[clr.ResizeGrip]             = ImVec4(0.80, 0.80, 0.80, 0.30) -- не используется
+		colors[clr.ResizeGripHovered]      = ImVec4(0.95, 0.95, 0.95, 0.60)	-- не используется
+		colors[clr.ResizeGripActive]       = ImVec4(1.00, 1.00, 1.00, 0.90)	-- не используется
+		colors[clr.CloseButton]            = ImVec4(0.45, 0.45, 0.45, 0.50) -- фон кнопки закрыть
+		colors[clr.CloseButtonHovered]     = ImVec4(0.70, 0.70, 0.90, 0.60) -- кнопка закрыть когда навели курсор
+		colors[clr.CloseButtonActive]      = ImVec4(0.70, 0.70, 0.70, 1.00) -- кнопка закрыть когда нажали
+		colors[clr.PlotLines]              = ImVec4(1.00, 1.00, 1.00, 1.00) -- цвет линии на графике
+		colors[clr.PlotLinesHovered]       = ImVec4(1.00, 1.00, 1.00, 1.00) -- цвет линии когда наводишь
+		colors[clr.PlotHistogram]          = ImVec4(1.00, 1.00, 1.00, 1.00) -- цвет столбиков
+		colors[clr.PlotHistogramHovered]   = ImVec4(1.00, 1.00, 1.00, 1.00) -- цвет столбиков когда наводишь курсор
+		colors[clr.TextSelectedBg]         = ImVec4(1.00, 1.00, 1.00, 0.35) -- хз
+		colors[clr.ModalWindowDarkening]   = ImVec4(0.88, 0.88, 0.88, 0.35) -- хз
+	end
+
 end
 
 function toScreenY(gY)
