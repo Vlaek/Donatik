@@ -19,6 +19,7 @@
 - [X] Samp-Rp
 - [X] Evolve Role Play
 - [X] Arizona Role Play
+- [X] Advance Role Play
 ___
 
 ## Стандартные горячие клавиши
