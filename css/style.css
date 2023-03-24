@@ -34,7 +34,7 @@ h1, h2, h3, h4, h5, h6 {
     width: 100%;
     min-height: 100vh;
 
-    background: url("../image/intro.jpg") center no-repeat;;
+    background: url("../images/intro.jpg") center no-repeat;;
     -webkit-background-size: cover;
     background-size: cover;
 
