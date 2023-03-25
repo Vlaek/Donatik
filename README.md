@@ -1,4 +1,4 @@
-# [Donatik](https://github.com/Vlaek/Donatik/archive/refs/heads/master.zip) [HTML-VERSION])(https://vlaek.github.io/Donatik/)
+# [Donatik](https://github.com/Vlaek/Donatik/archive/refs/heads/master.zip) [HTML-VERSION](https://vlaek.github.io/Donatik/)
 
 **Donatik** - это lua скрипт, функционал которого направлен на попрошайничество денег у игроков, составление топов донатеров, а также сбор статистики. Имеется возможность отправления скриншотов с донатами в телеграм, а также выполнение функций скрипта.
 
