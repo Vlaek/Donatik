@@ -1,6 +1,6 @@
 script_name("Donatik")
 script_author("bier from Revolution")
-script_version("25.01.2023")
+script_version("31.03.2023")
 script_version_number(26)
 script_url("https://vlaek.github.io/Donatik/")
 script = {update = false, loaded = false, reload = false}
@@ -419,10 +419,16 @@ function main()
 	project = (serverName:find('Samp%-Rp.Ru') and 'SRP' or (serverName:find('Evolve') and 'Evolve' or (serverName:find('Arizona') and 'Arizona' or (serverName:find('Advance') and 'Advance' or ''))))
 	if project == '' then script.sendErrorMessage("Сервер " .. serverName .. " не поддерживается") thisScript():unload() return false end
 	server = ''
+	sampAddChatMessage(serverName, -1)
 	for k, v in pairs(servers[project]) do
 		if k ~= nil then
 			if string.find(serverName, v, 1, true) then
 				server = v
+				break
+			end
+			if string.find(serverName, "Revo", 1, true) then
+				server = "Revolution"
+				break
 			end
 		end
 	end
@@ -1163,7 +1169,7 @@ local MESSAGES = {
 		PAY_MONEY 	= u8:decode"^ Вы получили (%d+) вирт",
 		PAY_NICK 	= u8:decode"от (.+)%[",
 		BANK 		= u8:decode"^ Вы получили .+ вирт, на счет от .+$",
-		BANK_MONEY 	= u8:decode"^ Вы получили .+ вирт, на счет от .+$",
+		BANK_MONEY 	= u8:decode"^ Вы получили (.+)% вирт, на счет от",
 		BANK_NICK 	= u8:decode"от (.+)% %["
 	},
 	Evolve = {
@@ -1171,7 +1177,7 @@ local MESSAGES = {
 		PAY_MONEY 	= u8:decode"^ Вы получили (%d+) вирт",
 		PAY_NICK 	= u8:decode"от (.+)%[",
 		BANK 		= u8:decode"^ Вы получили .+ вирт на счет от .+$",
-		BANK_MONEY 	= u8:decode"^ Вы получили .+ вирт на счет от .+$",
+		BANK_MONEY 	= u8:decode"^ Вы получили (.+)% вирт на счет от",
 		BANK_NICK 	= u8:decode"от (.+)% %["
 	},
 	Arizona = {
@@ -1202,10 +1208,10 @@ function sampev.onServerMessage(color, text)
 				if string.find(text, MESSAGES[project].BANK) then 
 					script.sendMessage("Денежный перевод на счет!")
 					donater.nick  = string.match(text, MESSAGES[project].BANK_NICK)
-					donater.money = string.match(text, MESSAGES[project].BANK_MONEY)
+					donater.money = tonumber(string.match(text, MESSAGES[project].BANK_MONEY))
 				elseif string.find(text, MESSAGES[project].PAY) then
 					donater.nick  = string.match(text, MESSAGES[project].PAY_NICK)
-					donater.money = string.match(text, MESSAGES[project].PAY_MONEY)
+					donater.money = tonumber(string.match(text, MESSAGES[project].PAY_MONEY))
 					peds = getAllChars()
 					for k, ped in pairs(peds) do
 						if doesCharExist(ped) then
@@ -1229,40 +1235,40 @@ function sampev.onServerMessage(color, text)
 				end
 				
 				if settings_ini.Settings.DonateNotify then
-					if tonumber(donater.money) >= 1000000 then
+					if donater.money >= 1000000 then
 						script.sendMessage("Вы получили {FF0000}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF0000}" .. donater.nick) -- red
 						if settings_ini.Settings.Sound then soundManager.playSound("1k") end				
-					elseif tonumber(donater.money) >= 500000 and tonumber(donater.money) < 1000000 then
+					elseif donater.money >= 500000 and donater.money < 1000000 then
 						script.sendMessage("Вы получили {FF0000}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF0000}" .. donater.nick) -- red
 						if settings_ini.Settings.Sound then soundManager.playSound("500k") end
-					elseif tonumber(donater.money) >= 250000 and tonumber(donater.money) < 500000 then
+					elseif donater.money >= 250000 and donater.money < 500000 then
 						script.sendMessage("Вы получили {FF0000}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF0000}" .. donater.nick) -- red
 						if settings_ini.Settings.Sound then soundManager.playSound("250k") end
-					elseif tonumber(donater.money) >= 100000 and tonumber(donater.money) < 250000 then
+					elseif donater.money >= 100000 and donater.money < 250000 then
 						script.sendMessage("Вы получили {FF0000}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF0000}" .. donater.nick) -- red
 						if settings_ini.Settings.Sound then soundManager.playSound("100k") end
-					elseif tonumber(donater.money) >= 75000 and tonumber(donater.money) < 100000 then
+					elseif donater.money >= 75000 and donater.money < 100000 then
 						script.sendMessage("Вы получили {FF1493}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF1493}" .. donater.nick) -- yellow
 						if settings_ini.Settings.Sound then soundManager.playSound("75k") end
-					elseif tonumber(donater.money) >= 50000 and tonumber(donater.money) < 75000 then
+					elseif donater.money >= 50000 and donater.money < 75000 then
 						script.sendMessage("Вы получили {FF00FF}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {FF00FF}" .. donater.nick) -- pink
 						if settings_ini.Settings.Sound then soundManager.playSound("50k") end
-					elseif tonumber(donater.money) >= 25000 and tonumber(donater.money) < 50000 then
+					elseif donater.money >= 25000 and donater.money < 50000 then
 						script.sendMessage("Вы получили {800080}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {800080}" .. donater.nick) -- purple
 						if settings_ini.Settings.Sound then soundManager.playSound("25k") end
-					elseif tonumber(donater.money) >= 10000 and tonumber(donater.money) < 25000 then
+					elseif donater.money >= 10000 and donater.money < 25000 then
 						script.sendMessage("Вы получили {0000FF}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {0000FF}" .. donater.nick) -- blue
 						if settings_ini.Settings.Sound then soundManager.playSound("10k") end
-					elseif tonumber(donater.money) >= 5000 and tonumber(donater.money) < 10000 then
+					elseif donater.money >= 5000 and donater.money < 10000 then
 						script.sendMessage("Вы получили {00FFFF}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {00FFFF}" .. donater.nick) -- aqua
 						if settings_ini.Settings.Sound then soundManager.playSound("5k") end
-					elseif tonumber(donater.money) >= 1000 and tonumber(donater.money) < 5000 then
+					elseif donater.money >= 1000 and donater.money < 5000 then
 						script.sendMessage("Вы получили {00FF00}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {00FF00}" .. donater.nick) -- green
 						if settings_ini.Settings.Sound then soundManager.playSound("1k") end
-					elseif tonumber(donater.money) >= 100 and tonumber(donater.money) < 1000 then
+					elseif donater.money >= 100 and donater.money < 1000 then
 						script.sendMessage("Вы получили {808000}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {808000}" .. donater.nick) -- olive
 						if settings_ini.Settings.Sound then soundManager.playSound("100") end
-					elseif tonumber(donater.money) < 100 then
+					elseif donater.money < 100 then
 						script.sendMessage("Вы получили {556B2F}" .. convertNumber(donater.money) .. " {FFFFFF}вирт от {556B2F}" .. donater.nick) -- dark olive
 						if settings_ini.Settings.Sound then soundManager.playSound("0") end
 					else
